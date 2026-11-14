@@ -128,6 +128,23 @@ async function checkPassword(env, request, email, password) {
   return user;
 }
 
+/** Creates an account. Used by the app and by the connector's sign-in page, so the rules are the same in both. */
+async function createAccount(env, request, { email, password, name }) {
+  if (!validEmail(email)) throw new HttpError(400, 'Enter a valid email address.');
+  if (String(password || '').length < 8) throw new HttpError(400, 'Use a password of at least 8 characters.');
+  if (await getUser(env, email)) throw new HttpError(409, 'An account with that email already exists. Sign in instead.');
+  await limit(env, `signup:${request.headers.get('cf-connecting-ip') || 'unknown'}`, 5, DAY, 'Too many new accounts from this connection today. Try again tomorrow.');
+  const salt = randomId(12);
+  const address = cleanEmail(email);
+  // Plans someone shared with this email before the account existed are waiting for it.
+  const pending = (await env.DB.get(`pending:${address}`, 'json')) || [];
+  const first = String(name || '').trim().slice(0, 40);
+  const user = { id: randomId(9), email: address, name: first, salt, hash: await hashPassword(String(password), salt), v: 1, plans: pending, profile: first ? { name: first, home: '', interests: [], pace: 'balanced', spend: 'mid', avoid: '' } : null, created: stamp() };
+  await putUser(env, user);
+  if (pending.length) await env.DB.delete(`pending:${address}`);
+  return user;
+}
+
 const sessionFor = (env, user) => sign(env, { typ: 'session', em: user.email, v: user.v, exp: now() + 90 * DAY });
 
 async function signedIn(request, env) {
@@ -208,18 +225,7 @@ async function route(request, env, path) {
   }
 
   if (path === '/auth/signup') {
-    const { email, password, name } = await readJson(request);
-    if (!validEmail(email)) throw new HttpError(400, 'Enter a valid email address.');
-    if (String(password || '').length < 8) throw new HttpError(400, 'Use a password of at least 8 characters.');
-    if (await getUser(env, email)) throw new HttpError(409, 'An account with that email already exists. Sign in instead.');
-    await limit(env, `signup:${request.headers.get('cf-connecting-ip') || 'unknown'}`, 5, DAY, 'Too many new accounts from this connection today. Try again tomorrow.');
-    const salt = randomId(12);
-    const address = cleanEmail(email);
-    // Plans someone shared with this email before the account existed are waiting for it.
-    const pending = (await env.DB.get(`pending:${address}`, 'json')) || [];
-    const user = { id: randomId(9), email: address, name: String(name || '').trim().slice(0, 40), salt, hash: await hashPassword(password, salt), v: 1, plans: pending, profile: null, created: stamp() };
-    await putUser(env, user);
-    if (pending.length) await env.DB.delete(`pending:${address}`);
+    const user = await createAccount(env, request, await readJson(request));
     return ok({ token: await sessionFor(env, user), user: publicUser(user) });
   }
 
@@ -599,28 +605,38 @@ async function readClient(env, clientId) {
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function signInPage({ params, client, error }) {
+const APP_URL = 'https://kaetojn.github.io/Event-Planner/';
+
+function signInPage({ params, client, error, mode }) {
+  const fresh = mode === 'new';
   const hidden = ['response_type', 'client_id', 'redirect_uri', 'code_challenge', 'code_challenge_method', 'state', 'scope', 'resource']
     .map(k => `<input type="hidden" name="${k}" value="${esc(params.get(k))}">`).join('');
+  const other = new URLSearchParams(params);
+  other.set('mode', fresh ? 'in' : 'new');
+  for (const k of ['email', 'password', 'name']) other.delete(k);
   return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Connect ${esc(client.n)} to Plan A</title>
+<title>${fresh ? 'Create a Plan A account' : `Connect ${esc(client.n)} to Plan A`}</title>
 <style>
   *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f7f5;color:#15181b;font:16px/1.5 Inter,system-ui,-apple-system,sans-serif;padding:20px}
   main{width:100%;max-width:400px;display:grid;gap:18px}
   .logo{font:500 26px/1 "Cormorant Garamond",Georgia,serif} .logo i{font-style:italic}
   h1{margin:0;font:600 38px/1.05 "Cormorant Garamond",Georgia,serif} p{margin:0;color:#5b6066;font-size:15px} label{display:grid;gap:6px;font-weight:600;font-size:14px}
-  input[type=email],input[type=password]{height:48px;border:1px solid #d9d9d4;border-radius:12px;padding:0 12px;font:inherit;background:#fff}
+  input[type=email],input[type=password],input[type=text]{height:48px;border:1px solid #d9d9d4;border-radius:12px;padding:0 12px;font:inherit;font-weight:400;background:#fff}
   input:focus{outline:2px solid #1e4a3d;outline-offset:1px} button{height:52px;border:0;border-radius:26px;background:#1e4a3d;color:#fff;font:inherit;font-weight:600;cursor:pointer}
-  .err{color:#a8322b;font-weight:600;font-size:14px}
+  .err{color:#a8322b;font-weight:600;font-size:14px} a{color:#15181b;font-weight:600;font-size:14px} small{color:#5b6066;font-weight:400;font-size:13px}
 </style></head><body><main>
 <div class="logo">Plan <i>A</i></div>
-<div style="display:grid;gap:8px"><h1>Connect ${esc(client.n)}</h1><p>${esc(client.n)} will be able to read your plans and profile, and add or change plans, items, tasks and costs.</p></div>
-<form method="post" style="display:grid;gap:14px">${hidden}
-<label>Email<input type="email" name="email" autocomplete="username" required autofocus></label>
-<label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+<div style="display:grid;gap:8px"><h1>${fresh ? 'Create your account' : `Connect ${esc(client.n)}`}</h1><p>${fresh
+    ? `Your account keeps your plans and works in the Plan A app too. Once it is made, ${esc(client.n)} can read your plans and profile and help build them.`
+    : `${esc(client.n)} will be able to read your plans and profile, and add or change plans, items, tasks and costs.`}</p></div>
+<form method="post" style="display:grid;gap:14px">${hidden}<input type="hidden" name="mode" value="${fresh ? 'new' : 'in'}">
+${fresh ? '<label>First name<input type="text" name="name" autocomplete="given-name" autofocus></label>' : ''}
+<label>Email<input type="email" name="email" autocomplete="username" required ${fresh ? '' : 'autofocus'}></label>
+<label>Password<input type="password" name="password" autocomplete="${fresh ? 'new-password' : 'current-password'}" ${fresh ? 'minlength="8"' : ''} required>${fresh ? '<small>At least 8 characters</small>' : ''}</label>
 ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
-<button type="submit">Allow access</button></form>
-<p>You can disconnect at any time in Claude's connector settings. Your password is never shared with ${esc(client.n)}.</p>
+<button type="submit">${fresh ? 'Create account and connect' : 'Allow access'}</button></form>
+<a href="?${esc(other.toString())}">${fresh ? 'Have an account? Sign in' : 'New to Plan A? Create an account'}</a>
+<p>You can disconnect at any time in Claude's connector settings. Your password is never shared with ${esc(client.n)}. Open your plans any time at <a href="${APP_URL}" target="_blank" rel="noreferrer">the Plan A app</a>.</p>
 </main></body></html>`, { status: error ? 401 : 200, headers: { 'content-type': 'text/html;charset=utf-8', 'cache-control': 'no-store', 'x-frame-options': 'DENY', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https:; frame-ancestors 'none'" } });
 }
 
@@ -639,10 +655,14 @@ async function authorize(request, env, url) {
   };
   if (params.get('response_type') !== 'code') return back({ error: 'unsupported_response_type' });
   if (!params.get('code_challenge') || params.get('code_challenge_method') !== 'S256') return back({ error: 'invalid_request', error_description: 'PKCE with S256 is required' });
-  if (request.method !== 'POST') return signInPage({ params, client });
+  const mode = params.get('mode') === 'new' ? 'new' : 'in';
+  if (request.method !== 'POST') return signInPage({ params, client, mode });
   let user;
-  try { user = await checkPassword(env, request, params.get('email'), params.get('password')); }
-  catch (e) { return signInPage({ params, client, error: e.message }); }
+  try {
+    user = mode === 'new'
+      ? await createAccount(env, request, { email: params.get('email'), password: params.get('password'), name: params.get('name') })
+      : await checkPassword(env, request, params.get('email'), params.get('password'));
+  } catch (e) { return signInPage({ params, client, mode, error: e.message }); }
   const code = await sign(env, { typ: 'code', em: user.email, v: user.v, cid: await sha256(clientId), ru: redirect, cc: params.get('code_challenge'), exp: now() + 600 });
   return back({ code });
 }

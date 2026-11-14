@@ -23,7 +23,7 @@ Nothing personal lives in this repository. Plans are stored in the Worker's KV n
 - With `ANTHROPIC_API_KEY` set: suggestions for open time, a whole day, or anything the person describes.
 - With `GOOGLE_MAPS_KEY` set: place search, travel time between stops with a leave-by time, and suggestions chosen only from real places.
 - Send a plan as text, a PDF or an image.
-- The Claude connector at `/mcp` lets Claude read the profile and build plans from a chat.
+- The Claude connector at `/mcp` lets Claude read the profile and build plans from a chat. Its sign-in page can also create a Plan A account, so someone can start from Claude without visiting the app first.
 
 Still to come: a map drawn inside the app, bookings, an options list per place, the dream list, password reset and a bot check on sign-up.
 
