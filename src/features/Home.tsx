@@ -39,8 +39,8 @@ export function Home() {
     <main className="stagger mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-7 px-6 pt-5 pb-10">
       <header className="flex items-center justify-between">
         <div className="font-serif text-[26px] leading-none font-medium">Plan <span className="italic">A</span></div>
-        <IconButton label="Your profile and settings" onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">
-          {profile.name ? profile.name[0].toUpperCase() : <Person width={18} height={18} />}
+        <IconButton label={session ? 'Your profile' : 'Sign in or create an account'} onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">
+          {session && profile.name ? profile.name[0].toUpperCase() : <Person width={18} height={18} />}
         </IconButton>
       </header>
 
