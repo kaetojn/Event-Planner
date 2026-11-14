@@ -10,6 +10,7 @@ export type Travel = 'drive' | 'walk' | 'transit';
 export interface Access { role: 'owner' | 'editor'; owner: string; editors: string[]; view: string | null }
 export interface Session { token: string; user: { email: string; name: string } }
 export interface Features { ai: boolean; places: boolean }
+export interface PlaceMatch { id: string; name: string; detail: string }
 export interface FoundPlace { id: string; name: string; address: string; lat: number; lng: number; type?: string }
 export interface Suggestion { title: string; start: string; end?: string; place?: string; address?: string; lat?: number; lng?: number; rating?: number; cost?: number; why: string }
 
@@ -41,6 +42,9 @@ export interface Plan {
   title: string;
   kind: Kind;
   destination: string;
+  /** When the destination was chosen from the map: the rest of its address, and where it is. */
+  area?: string;
+  at?: { lat: number; lng: number };
   detail: Detail;
   people: number;
   budget?: number;

@@ -322,6 +322,20 @@ async function route(request, env, path) {
     return ok({ editors: doc.editors, hasAccount: !!other });
   }
 
+  if (path === '/autocomplete') {
+    // Called on most keystrokes, so it is limited in memory and not in KV, which allows few writes a day.
+    const { input, session, near } = await readJson(request);
+    if (String(input || '').trim().length < 2) return ok({ matches: [] });
+    softLimit(`ac:${user.id}`, 1500, 'You have reached today\'s limit for place lookups.');
+    return ok({ matches: await autocomplete(env, String(input), session, near) });
+  }
+
+  if (path === '/place') {
+    const { id, session } = await readJson(request);
+    softLimit(`pd:${user.id}`, 300, 'You have reached today\'s limit for place lookups.');
+    return ok(await placeDetails(env, id, session));
+  }
+
   if (path === '/places') {
     const { q, near } = await readJson(request);
     if (!String(q || '').trim()) throw new HttpError(400, 'Type a name or address to look for.');
@@ -349,6 +363,47 @@ async function route(request, env, path) {
 
 function needMaps(env) {
   if (!env.GOOGLE_MAPS_KEY) throw new HttpError(501, 'Place search is not set up yet. Add a GOOGLE_MAPS_KEY secret to the Worker.');
+}
+
+/** A rough per-day cap kept in this Worker's memory. It resets when Cloudflare restarts the Worker, which is fine for a safety net. */
+const counts = new Map();
+function softLimit(key, max, message) {
+  const k = `${key}:${stamp().slice(0, 10)}`;
+  const n = (counts.get(k) || 0) + 1;
+  if (counts.size > 5000) counts.clear();
+  counts.set(k, n);
+  if (n > max) throw new HttpError(429, message);
+}
+
+const sessionToken = t => (typeof t === 'string' && /^[\w-]{8,36}$/.test(t) ? t : undefined);
+
+/** Places API (New) autocomplete: names that match what has been typed so far, nearest first when a position is given. */
+async function autocomplete(env, input, session, near) {
+  needMaps(env);
+  const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY },
+    body: JSON.stringify({
+      input: input.slice(0, 120), sessionToken: sessionToken(session),
+      ...(near && Number.isFinite(+near.lat) && Number.isFinite(+near.lng) ? { locationBias: { circle: { center: { latitude: +near.lat, longitude: +near.lng }, radius: 50000 } } } : {}),
+    }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new HttpError(502, `Google Maps did not answer: ${json?.error?.message || res.status}`);
+  return (json.suggestions || []).map(x => x.placePrediction).filter(Boolean).slice(0, 5).map(p => ({
+    id: p.placeId, name: p.structuredFormat?.mainText?.text || p.text?.text || '', detail: p.structuredFormat?.secondaryText?.text || '',
+  })).filter(p => p.id && p.name);
+}
+
+/** The address and map position of one place chosen from autocomplete. */
+async function placeDetails(env, id, session) {
+  needMaps(env);
+  if (typeof id !== 'string' || !/^[\w-]{10,300}$/.test(id)) throw new HttpError(400, 'That place could not be looked up.');
+  const token = sessionToken(session);
+  const res = await fetch(`https://places.googleapis.com/v1/places/${id}${token ? `?sessionToken=${token}` : ''}`, { headers: { 'X-Goog-Api-Key': env.GOOGLE_MAPS_KEY, 'X-Goog-FieldMask': 'formattedAddress,location' } });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.location) throw new HttpError(502, `Google Maps did not answer: ${json?.error?.message || res.status}`);
+  return { address: json.formattedAddress || '', lat: json.location.latitude, lng: json.location.longitude };
 }
 
 /** Places API (New) text search. `rich` adds rating and price level, which Google bills at a higher tier. */
@@ -444,7 +499,7 @@ async function suggest(env, plan, profile, { date, from, to, wish }) {
   const day = plan.days.find(d => d.date === date);
   if (!day) throw new HttpError(400, 'That day is not in this plan.');
   if (!validTime(from) || !validTime(to) || toMin(to) - toMin(from) < 30) throw new HttpError(400, 'There is not enough open time to suggest anything.');
-  const where = String(plan.destination || '').trim();
+  const where = [plan.destination, plan.area].map(x => String(x || '').trim()).filter(Boolean).join(', ');
   if (!where) throw new HttpError(400, 'Add where this plan takes place, so suggestions can be nearby.');
   const ask = String(wish || '').trim().slice(0, 200);
 

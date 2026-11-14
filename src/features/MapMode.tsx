@@ -16,7 +16,7 @@ export function MapMode({ plan, day }: { plan: Plan; day: Day }) {
   const mode = plan.travel ?? 'drive';
   const stops = ordered(day.items).filter(i => i.place && i.status !== 'skipped');
   const legOf = useLegs(stops, mode);
-  const q = (i: { place?: string; address?: string }) => encodeURIComponent(i.address ? `${i.place}, ${i.address}` : plan.destination && !i.place!.includes(',') ? `${i.place}, ${plan.destination}` : i.place!);
+  const q = (i: { place?: string; address?: string }) => encodeURIComponent(i.address ? `${i.place}, ${i.address}` : plan.destination && !i.place!.includes(',') ? `${i.place}, ${[plan.destination, plan.area].filter(Boolean).join(', ')}` : i.place!);
   const how = { drive: 'driving', walk: 'walking', transit: 'transit' }[mode];
   const route = stops.length > 1
     ? `https://www.google.com/maps/dir/?api=1&travelmode=${how}&origin=${q(stops[0])}&destination=${q(stops[stops.length - 1])}${stops.length > 2 ? `&waypoints=${stops.slice(1, -1).map(q).join('%7C')}` : ''}`

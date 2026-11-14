@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Back } from '@/components/icons';
+import { PlaceField } from '@/components/PlaceField';
 import { Button, Choice, Eyebrow, Field, IconButton } from '@/components/ui';
 import { addPlan, go } from '@/lib/store';
 import { starterTasks } from '@/lib/templates';
@@ -13,6 +14,8 @@ export function NewPlan() {
   const [step, setStep] = useState(1);
   const [kind, setKind] = useState<Kind>('weekend');
   const [destination, setDestination] = useState('');
+  // Filled in when the destination is picked from Google Maps, so suggestions and searches can be nearby.
+  const [spot, setSpot] = useState<{ area?: string; at?: { lat: number; lng: number } }>({});
   const [start, setStart] = useState(today());
   const [end, setEnd] = useState(today());
   const [detail, setDetail] = useState<Detail>('half');
@@ -27,7 +30,7 @@ export function NewPlan() {
   const finish = () => {
     const now = new Date().toISOString();
     const plan: Plan = {
-      id: uid(), title: title.trim() || suggested || kindLabel, kind, destination: destination.trim(), detail, people,
+      id: uid(), title: title.trim() || suggested || kindLabel, kind, destination: destination.trim(), ...spot, detail, people,
       budget: +budget > 0 ? +budget : undefined, days: daysBetween(start, end), tasks: starterTasks(kind), costs: [], createdAt: now, updatedAt: now,
     };
     addPlan(plan);
@@ -52,7 +55,9 @@ export function NewPlan() {
         {step === 2 && (<>
           <Question eyebrow={kindLabel} title={<>Where and <em>when</em>?</>} note="A city, a hotel or a venue. Suggestions and travel times will be worked out from here." />
           <div className="flex flex-col gap-4">
-            <Field label="Where" value={destination} onChange={e => setDestination(e.target.value)} placeholder="Montréal, or the name of the hotel" autoFocus />
+            <PlaceField label="Where" value={destination} placeholder="A city, a hotel or a venue" hint={spot.area} autoFocus
+              onText={text => { setDestination(text); setSpot({}); }}
+              onPick={p => { setDestination(p.name); setSpot({ area: p.detail || undefined, at: p.lat !== undefined && p.lng !== undefined ? { lat: p.lat, lng: p.lng } : undefined }); }} />
             <div className="grid grid-cols-2 gap-3">
               <Field label="From" type="date" value={start} onChange={e => { setStart(e.target.value); if (e.target.value > end) setEnd(e.target.value); }} />
               <Field label="Until" type="date" value={end} min={start} onChange={e => setEnd(e.target.value)} />

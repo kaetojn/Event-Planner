@@ -1,12 +1,12 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { useState } from 'react';
+import { PlaceField } from '@/components/PlaceField';
 import { Button, Check, Eyebrow, Field, Segmented, Sheet, useSwipe } from '@/components/ui';
-import { api } from '@/lib/api';
 import { TRAVEL_WORD, useLegs } from '@/lib/legs';
 import { featuresAtom, patchItem, removeItem, saveItem, sessionAtom } from '@/lib/store';
 import { clashes, clock, gapBetween, longDay, money, ordered, partOf, span, toMin, uid } from '@/lib/time';
-import { PARTS, type Day, type FoundPlace, type Item, type Part, type Plan } from '@/lib/types';
+import { PARTS, type Day, type Item, type Part, type Plan } from '@/lib/types';
 import { SuggestSheet } from './SuggestSheet';
 
 const hhmm = (mins: number) => { const m = Math.max(0, Math.min(23 * 60 + 59, mins)); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
@@ -106,8 +106,6 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
 
 /** Add or change one item. A new item starts an hour after the last one in the day. */
 export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; item?: Item; onClose: () => void }) {
-  const session = useAtomValue(sessionAtom);
-  const features = useAtomValue(featuresAtom);
   const lastTimed = ordered(day.items).filter(i => i.start).pop();
   const [title, setTitle] = useState(item?.title ?? '');
   const [when, setWhen] = useState<'time' | 'part'>(item ? (item.start ? 'time' : 'part') : plan.detail === 'loose' ? 'part' : 'time');
@@ -117,21 +115,10 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const [place, setPlace] = useState(item?.place ?? '');
   // The address and map position stay only while the place is the one that was picked from the search.
   const [spot, setSpot] = useState<{ address?: string; lat?: number; lng?: number }>(item ? { address: item.address, lat: item.lat, lng: item.lng } : {});
-  const [found, setFound] = useState<FoundPlace[] | string | null>(null);
-  const [finding, setFinding] = useState(false);
   const [cost, setCost] = useState(item?.cost ? String(item.cost) : '');
   const [note, setNote] = useState(item?.note ?? '');
   const step = plan.detail === 'half' ? 1800 : 300;
   const badEnd = when === 'time' && !!end && end <= start;
-  const canFind = !!session && features.places;
-
-  const find = async () => {
-    setFinding(true);
-    try { const r = await api.places(session!.token, place.trim(), plan.destination); setFound(r.places.length ? r.places : 'Nothing was found by that name. Try adding the street or the city.'); }
-    catch (e) { setFound((e as Error).message); }
-    setFinding(false);
-  };
-
   const save = () => {
     saveItem(plan.id, day.date, {
       id: item?.id ?? uid(), title: title.trim(), status: item?.status ?? 'todo',
@@ -161,24 +148,9 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
       ) : (
         <Segmented label="Part of the day" value={part} onChange={setPart} options={PARTS} />
       )}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-end gap-2">
-          <Field className="flex-1" label="Where (optional)" value={place} onChange={e => { setPlace(e.target.value); setSpot({}); setFound(null); }} placeholder="Name or address" hint={spot.address} />
-          {canFind && !spot.address && <Button className="h-12" disabled={!place.trim() || finding} onClick={find}>{finding ? 'Looking' : 'Find'}</Button>}
-        </div>
-        {typeof found === 'string' && <p className="text-[13px] text-muted" role="status">{found}</p>}
-        {Array.isArray(found) && (
-          <ul className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
-            {found.map(f => (
-              <li key={f.id} className="border-b border-line last:border-0">
-                <button type="button" className="flex w-full flex-col px-3 py-2.5 text-left" onClick={() => { setPlace(f.name); setSpot({ address: f.address, lat: f.lat, lng: f.lng }); setFound(null); }}>
-                  <span className="text-[15px] font-semibold">{f.name}</span><span className="text-[13px] text-muted">{f.address}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <PlaceField label="Where (optional)" value={place} placeholder="Name or address" hint={spot.address} near={plan.at}
+        onText={text => { setPlace(text); setSpot({}); }}
+        onPick={p => { setPlace(p.name); setSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Cost (optional)" type="number" inputMode="decimal" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" />
         <Field label="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />

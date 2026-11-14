@@ -1,4 +1,4 @@
-import type { Access, Features, FoundPlace, Plan, Profile, Session, Suggestion, Travel } from './types';
+import type { Access, Features, FoundPlace, PlaceMatch, Plan, Profile, Session, Suggestion, Travel } from './types';
 
 /** The Cloudflare Worker that holds accounts, plans, and the Claude and Google Maps keys. */
 export const WORKER = 'https://plan-a.kaetojn.workers.dev';
@@ -31,6 +31,8 @@ export const api = {
   share: (token: string, id: string, on: boolean) => post<{ view: string | null }>('/plan/share', { id, on }, token),
   invite: (token: string, id: string, email: string, on: boolean) => post<{ editors: string[]; hasAccount: boolean }>(on ? '/plan/invite' : '/plan/uninvite', { id, email }, token),
   view: (token: string) => post<{ plan: Plan; by: string }>('/view', { token }),
+  autocomplete: (token: string, input: string, session: string, near?: { lat: number; lng: number }) => post<{ matches: PlaceMatch[] }>('/autocomplete', { input, session, near }, token),
+  place: (token: string, id: string, session: string) => post<{ address: string; lat: number; lng: number }>('/place', { id, session }, token),
   places: (token: string, q: string, near: string) => post<{ places: FoundPlace[] }>('/places', { q, near }, token),
   route: (token: string, points: { lat: number; lng: number }[], mode: Travel) => post<{ legs: ({ mins: number; km: number } | null)[] }>('/route', { points, mode }, token),
   suggest: (token: string, body: { planId: string; date: string; from: string; to: string; wish?: string }) => post<{ suggestions: Suggestion[]; grounded: boolean }>('/suggest', body, token),
