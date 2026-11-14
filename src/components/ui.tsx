@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { createPortal } from 'react-dom';
 import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type PointerEvent, type ReactNode } from 'react';
 import { Tick, Cross } from './icons';
 
@@ -73,7 +74,11 @@ export function Field({ label, hint, className, ...p }: InputHTMLAttributes<HTML
   );
 }
 
-/** A bottom sheet on phones and a centred dialog on wider screens. */
+/**
+ * A bottom sheet on phones and a centred dialog on wider screens.
+ * It is drawn at the top of the page, outside whatever opened it. A sheet left inside an animated
+ * section is positioned against that section instead of the screen, and ends up off-centre and cut off.
+ */
 export function Sheet({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -84,7 +89,7 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
     ref.current?.focus();
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = before; };
   }, [onClose]);
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center print:hidden">
       <div className="absolute inset-0 animate-fade bg-black/45" onClick={onClose} />
       <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-lg animate-sheet flex-col rounded-t-[28px] bg-ground shadow-2xl outline-none md:rounded-[28px]">
@@ -92,10 +97,11 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
           <h2 className="font-serif text-[28px] leading-none font-semibold">{title}</h2>
           <IconButton label="Close" onClick={onClose} className="-mr-3 text-muted"><Cross /></IconButton>
         </div>
-        <div className="flex flex-col gap-4 overflow-y-auto px-6 py-3">{children}</div>
+        <div className={clsx('flex flex-col gap-4 overflow-y-auto overscroll-contain px-6 pt-3', footer ? 'pb-3' : 'pb-[max(20px,env(safe-area-inset-bottom))]')}>{children}</div>
         {footer && <div className="flex gap-2 border-t border-line px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -28,15 +28,25 @@ export function SuggestSheet({ plan, day, from, to, onClose }: { plan: Plan; day
     setAdded(a => [...a, s.title + s.start]);
   };
 
+  const left = state && 'suggestions' in state ? state.suggestions.filter(s => !added.includes(s.title + s.start)) : [];
+
   return (
-    <Sheet title="Suggestions" onClose={onClose} footer={added.length ? <Button variant="primary" className="flex-1" onClick={onClose}>Done</Button> : undefined}>
+    <Sheet title="Suggestions" onClose={onClose} footer={left.length === 0 && added.length ? <Button variant="primary" className="flex-1" onClick={onClose}>Done</Button> : left.length ? <>
+      {left.length > 1 && <Button className="flex-1" onClick={() => left.forEach(add)}>Add all {left.length}</Button>}
+      {added.length > 0 && <Button variant="primary" className="flex-1" onClick={onClose}>Done</Button>}
+    </> : undefined}>
       <Eyebrow>{longDay(day.date)} · {clock(from)} to {clock(to)}</Eyebrow>
       <form className="flex gap-2" onSubmit={e => { e.preventDefault(); void ask(wish.trim()); }}>
         <input aria-label="Anything in mind?" value={wish} onChange={e => setWish(e.target.value)} placeholder="Anything in mind? A rooftop bar, a gallery" className="h-12 flex-1 rounded-xl border border-edge bg-surface px-3 text-base placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" />
         <Button type="submit" className="h-12" disabled={!state}>{wish.trim() ? 'Find' : 'Again'}</Button>
       </form>
 
-      {!state && <div className="flex flex-col gap-3 py-2" role="status" aria-label="Finding suggestions">{[0, 1, 2].map(n => <div key={n} className="h-28 animate-pulse rounded-2xl bg-line" />)}</div>}
+      {!state && (
+        <div className="flex flex-col gap-3 pb-2" role="status">
+          <p className="text-[15px] text-muted">Looking for things that suit you. This takes a few seconds.</p>
+          {[0, 1, 2].map(n => <div key={n} className="h-28 animate-pulse rounded-2xl bg-line" style={{ animationDelay: `${n * 150}ms` }} />)}
+        </div>
+      )}
       {state && 'error' in state && <p className="py-2 text-[15px] font-medium text-bad" role="alert">{state.error}</p>}
       {state && 'suggestions' in state && (
         <div className="flex flex-col gap-3 pb-3">
