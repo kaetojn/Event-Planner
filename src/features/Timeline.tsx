@@ -1,30 +1,53 @@
 import clsx from 'clsx';
+import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 import { Button, Check, Eyebrow, Field, Segmented, Sheet, useSwipe } from '@/components/ui';
-import { patchItem, removeItem, saveItem } from '@/lib/store';
+import { api } from '@/lib/api';
+import { TRAVEL_WORD, useLegs } from '@/lib/legs';
+import { featuresAtom, patchItem, removeItem, saveItem, sessionAtom } from '@/lib/store';
 import { clashes, clock, gapBetween, longDay, money, ordered, partOf, span, toMin, uid } from '@/lib/time';
-import { PARTS, type Day, type Item, type Part, type Plan } from '@/lib/types';
+import { PARTS, type Day, type FoundPlace, type Item, type Part, type Plan } from '@/lib/types';
+import { SuggestSheet } from './SuggestSheet';
 
-/** One day of the plan, in order, with the time between items worked out. */
+const hhmm = (mins: number) => { const m = Math.max(0, Math.min(23 * 60 + 59, mins)); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+
+/** One day of the plan, in order, with the time between items and the travel between places worked out. */
 export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: () => void }) {
+  const session = useAtomValue(sessionAtom);
+  const features = useAtomValue(featuresAtom);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [window, setWindow] = useState<{ from: string; to: string } | null>(null);
   const items = ordered(day.items);
+  const mode = plan.travel ?? 'drive';
+  const legOf = useLegs(items, mode);
+  const canSuggest = !!session && features.ai;
+  const suggest = window && <SuggestSheet plan={plan} day={day} from={window.from} to={window.to} onClose={() => setWindow(null)} />;
 
   if (!items.length) {
     return (
       <section className="flex animate-rise flex-col gap-3 pt-6">
         <Eyebrow>{longDay(day.date)}</Eyebrow>
         <p className="font-serif text-[28px] leading-tight font-medium">Nothing planned for this day yet.</p>
-        <Button variant="soft" className="self-start" onClick={onAdd}>Add the first thing</Button>
+        <div className="flex flex-wrap gap-2">
+          {canSuggest && <Button variant="primary" onClick={() => setWindow({ from: '09:00', to: '21:00' })}>Suggest a day</Button>}
+          <Button variant="soft" onClick={onAdd}>Add the first thing</Button>
+        </div>
+        {suggest}
       </section>
     );
   }
+
+  const last = items[items.length - 1];
+  const lastEnds = last.start ? toMin(last.end ?? last.start) + (last.end ? 0 : 60) : null;
 
   return (
     <section key={day.date} className="flex flex-col pt-5">
       {items.map((item, n) => {
         const next = items[n + 1];
         const gap = next ? gapBetween(item, next) : null;
+        const leg = next ? legOf(item, next) : null;
+        const tight = !!gap && leg !== null && leg > gap.mins;
+        const travel = leg ? (tight ? `${span(leg)} ${TRAVEL_WORD[mode]}, but only ${span(gap!.mins)} between them` : `${span(leg)} ${TRAVEL_WORD[mode]}${next.start ? ` · leave by ${clock(hhmm(toMin(next.start) - leg))}` : ''}`) : null;
         return (
           <div key={item.id} className="animate-rise" style={{ animationDelay: `${Math.min(n, 6) * 40}ms` }}>
             <Row item={item} clash={!!next && clashes(item, next) ? next.title : undefined} onOpen={() => setEditing(item)} onStatus={status => patchItem(plan.id, day.date, item.id, { status })} />
@@ -33,19 +56,27 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
                 <div className="flex flex-col gap-1">
                   <Eyebrow>Open time</Eyebrow>
                   <div className="font-serif text-[22px] leading-tight font-medium">{span(gap.mins)} free before {next.title}</div>
+                  {travel && <div className="text-[13px] text-muted">{travel}</div>}
                 </div>
-                <Button variant="soft" className="self-start" onClick={onAdd}>Add something</Button>
+                <div className="flex flex-wrap gap-2">
+                  {canSuggest && <Button variant="soft" onClick={() => setWindow({ from: item.end!, to: next.start! })}>Suggest something nearby</Button>}
+                  <Button variant={canSuggest ? 'secondary' : 'soft'} onClick={onAdd}>Add something</Button>
+                </div>
               </div>
-            ) : gap ? (
-              <div className="flex h-11 items-center gap-2.5 pl-20 text-xs text-muted">
-                <span className="w-5 border-t border-dashed border-ring" />
-                {gap.free ? `${span(gap.mins)} free` : `${span(gap.mins)} until ${next.title}`}
+            ) : gap || travel ? (
+              <div className={clsx('flex min-h-11 items-center gap-2.5 py-2 pl-20 text-xs', tight ? 'font-medium text-bad' : 'text-muted')}>
+                <span className="w-5 shrink-0 border-t border-dashed border-ring" />
+                <span>{tight ? travel : [gap && (gap.free ? `${span(gap.mins)} free` : `${span(gap.mins)} until ${next.title}`), travel].filter(Boolean).join(' · ')}</span>
               </div>
             ) : next ? <div className="h-5" /> : null}
           </div>
         );
       })}
+      {canSuggest && lastEnds !== null && lastEnds <= 20 * 60 && (
+        <Button variant="soft" className="mt-6 self-start" onClick={() => setWindow({ from: hhmm(lastEnds), to: '22:00' })}>Suggest something for later</Button>
+      )}
       {editing && <ItemSheet plan={plan} day={day} item={editing} onClose={() => setEditing(null)} />}
+      {suggest}
     </section>
   );
 }
@@ -73,30 +104,39 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
   );
 }
 
-const plus = (t: string, mins: number) => {
-  const m = Math.min(23 * 60 + 30, toMin(t) + mins);
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-};
-
 /** Add or change one item. A new item starts an hour after the last one in the day. */
 export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; item?: Item; onClose: () => void }) {
+  const session = useAtomValue(sessionAtom);
+  const features = useAtomValue(featuresAtom);
   const lastTimed = ordered(day.items).filter(i => i.start).pop();
   const [title, setTitle] = useState(item?.title ?? '');
   const [when, setWhen] = useState<'time' | 'part'>(item ? (item.start ? 'time' : 'part') : plan.detail === 'loose' ? 'part' : 'time');
-  const [start, setStart] = useState(item?.start ?? (lastTimed ? plus(lastTimed.end ?? lastTimed.start!, lastTimed.end ? 30 : 60) : '09:00'));
+  const [start, setStart] = useState(item?.start ?? (lastTimed ? hhmm(Math.min(23 * 60 + 30, toMin(lastTimed.end ?? lastTimed.start!) + (lastTimed.end ? 30 : 60))) : '09:00'));
   const [end, setEnd] = useState(item?.end ?? '');
   const [part, setPart] = useState<Part>(item?.part ?? (lastTimed ? partOf(toMin(lastTimed.start!)) : 'morning'));
   const [place, setPlace] = useState(item?.place ?? '');
+  // The address and map position stay only while the place is the one that was picked from the search.
+  const [spot, setSpot] = useState<{ address?: string; lat?: number; lng?: number }>(item ? { address: item.address, lat: item.lat, lng: item.lng } : {});
+  const [found, setFound] = useState<FoundPlace[] | string | null>(null);
+  const [finding, setFinding] = useState(false);
   const [cost, setCost] = useState(item?.cost ? String(item.cost) : '');
   const [note, setNote] = useState(item?.note ?? '');
   const step = plan.detail === 'half' ? 1800 : 300;
   const badEnd = when === 'time' && !!end && end <= start;
+  const canFind = !!session && features.places;
+
+  const find = async () => {
+    setFinding(true);
+    try { const r = await api.places(session!.token, place.trim(), plan.destination); setFound(r.places.length ? r.places : 'Nothing was found by that name. Try adding the street or the city.'); }
+    catch (e) { setFound((e as Error).message); }
+    setFinding(false);
+  };
 
   const save = () => {
     saveItem(plan.id, day.date, {
       id: item?.id ?? uid(), title: title.trim(), status: item?.status ?? 'todo',
       ...(when === 'time' ? { start, end: end || undefined } : { part }),
-      place: place.trim() || undefined, cost: +cost > 0 ? +cost : undefined, note: note.trim() || undefined,
+      place: place.trim() || undefined, ...(place.trim() ? spot : {}), cost: +cost > 0 ? +cost : undefined, note: note.trim() || undefined,
     });
     onClose();
   };
@@ -121,7 +161,24 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
       ) : (
         <Segmented label="Part of the day" value={part} onChange={setPart} options={PARTS} />
       )}
-      <Field label="Where (optional)" value={place} onChange={e => setPlace(e.target.value)} placeholder="Name or address" />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-end gap-2">
+          <Field className="flex-1" label="Where (optional)" value={place} onChange={e => { setPlace(e.target.value); setSpot({}); setFound(null); }} placeholder="Name or address" hint={spot.address} />
+          {canFind && !spot.address && <Button className="h-12" disabled={!place.trim() || finding} onClick={find}>{finding ? 'Looking' : 'Find'}</Button>}
+        </div>
+        {typeof found === 'string' && <p className="text-[13px] text-muted" role="status">{found}</p>}
+        {Array.isArray(found) && (
+          <ul className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
+            {found.map(f => (
+              <li key={f.id} className="border-b border-line last:border-0">
+                <button type="button" className="flex w-full flex-col px-3 py-2.5 text-left" onClick={() => { setPlace(f.name); setSpot({ address: f.address, lat: f.lat, lng: f.lng }); setFound(null); }}>
+                  <span className="text-[15px] font-semibold">{f.name}</span><span className="text-[13px] text-muted">{f.address}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Cost (optional)" type="number" inputMode="decimal" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" />
         <Field label="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />

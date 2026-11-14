@@ -4,6 +4,7 @@ import { Home } from './features/Home';
 import { NewPlan } from './features/NewPlan';
 import { PlanView } from './features/PlanView';
 import { Profile } from './features/Profile';
+import { SharedView } from './features/SharedView';
 import { themeAtom, useRoute } from './lib/store';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
     return () => dark.removeEventListener('change', apply);
   }, [theme]);
 
+  if (route.screen === 'view') return <SharedView key={route.token} token={route.token} />;
   if (route.screen === 'new') return <NewPlan />;
   if (route.screen === 'profile') return <Profile />;
   if (route.screen === 'plan') return <PlanView key={route.id} id={route.id} />;

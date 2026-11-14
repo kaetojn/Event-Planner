@@ -1,0 +1,11 @@
+# Deploys worker/worker.js as the "plan-a" Worker (see .github/workflows/worker.yml).
+# Secrets set in the Cloudflare dashboard are left as they are.
+name = "plan-a"
+main = "worker/worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+keep_vars = true
+
+[[kv_namespaces]]
+binding = "DB"
+id = "875ef02033e5429da1bcf2ec1ec5879a"

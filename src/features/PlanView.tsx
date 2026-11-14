@@ -2,13 +2,15 @@ import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { useState } from 'react';
 import { Back, Plus } from '@/components/icons';
-import { Button, Eyebrow, IconButton, Sheet } from '@/components/ui';
-import { go, plansAtom, removePlan } from '@/lib/store';
-import { clock, dateRange, longDay, money, ordered, shortDay, today } from '@/lib/time';
-import { KINDS, PARTS, type Plan } from '@/lib/types';
+import { Button, Eyebrow, IconButton } from '@/components/ui';
+import { accessAtom, go, plansAtom } from '@/lib/store';
+import { longDay, shortDay, today } from '@/lib/time';
+import { KINDS, type Plan } from '@/lib/types';
 import { Budget } from './Budget';
 import { Checklist } from './Checklist';
+import { Itinerary } from './Itinerary';
 import { MapMode } from './MapMode';
+import { ShareSheet } from './ShareSheet';
 import { ItemSheet, Timeline } from './Timeline';
 
 type Mode = 'timeline' | 'checklist' | 'budget' | 'map';
@@ -17,6 +19,7 @@ const MODES: { id: Mode; label: string }[] = [{ id: 'timeline', label: 'Timeline
 /** One plan. It shows a single mode at a time so the screen never carries more than one job. */
 export function PlanView({ id }: { id: string }) {
   const plan = useAtomValue(plansAtom).find(p => p.id === id);
+  const access = useAtomValue(accessAtom)[id];
   const [mode, setMode] = useState<Mode>('timeline');
   const [date, setDate] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -48,7 +51,7 @@ export function PlanView({ id }: { id: string }) {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Eyebrow>{kind} · {plan.days.length === 1 ? shortDay(plan.days[0].date) : `${plan.days.length} days`}{plan.destination ? ` · ${plan.destination}` : ''}</Eyebrow>
+            <Eyebrow>{kind} · {plan.days.length === 1 ? shortDay(plan.days[0].date) : `${plan.days.length} days`}{plan.destination ? ` · ${plan.destination}` : ''}{access?.role === 'editor' ? ' · Shared with you' : ''}</Eyebrow>
             <h1 className="font-serif text-[40px] leading-none font-semibold tracking-[-0.01em]">{plan.title}</h1>
           </div>
           {byDay && plan.days.length > 1 && (
@@ -83,62 +86,7 @@ export function PlanView({ id }: { id: string }) {
   );
 }
 
-const when = (i: { start?: string; end?: string; part?: string }) => (i.start ? `${clock(i.start)}${i.end ? ` to ${clock(i.end)}` : ''}` : PARTS.find(p => p.id === i.part)?.label ?? '');
-
-/** The plan as plain text, laid out like a note, for pasting into a message. */
-function asText(plan: Plan) {
-  const lines = [plan.title, ''];
-  for (const d of plan.days) {
-    lines.push(longDay(d.date));
-    for (const i of ordered(d.items)) if (i.status !== 'skipped') lines.push(`${when(i)}: ${i.title}${i.place ? ` (${i.place})` : ''}`);
-    if (!d.items.length) lines.push('Nothing planned yet');
-    lines.push('');
-  }
-  return lines.join('\n').trim();
-}
-
-function ShareSheet({ plan, onClose }: { plan: Plan; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    const text = asText(plan);
-    try {
-      if (navigator.share) await navigator.share({ title: plan.title, text });
-      else { await navigator.clipboard.writeText(text); setCopied(true); }
-    } catch { /* the person closed the share menu */ }
-  };
-  return (
-    <Sheet title="Share" onClose={onClose}>
-      <p className="text-[15px] leading-relaxed text-muted">Send the plan as text, or save a clean copy as a PDF. Links that stay up to date, and inviting someone to edit, are being built.</p>
-      <Button variant="primary" size="lg" onClick={copy}>{copied ? 'Copied' : 'Send as text'}</Button>
-      <Button size="lg" onClick={() => { onClose(); setTimeout(() => print(), 350); }}>Save as PDF</Button>
-      <div className="mt-3 border-t border-line pt-4 pb-3">
-        <Button variant="danger" className="border border-edge" onClick={() => { if (confirm(`Delete "${plan.title}"? This cannot be undone.`)) { removePlan(plan.id); go('/'); } }}>Delete this plan</Button>
-      </div>
-    </Sheet>
-  );
-}
-
 /** The whole plan on paper. Hidden on screen and shown only when printing, which is how Save as PDF works. */
 function PrintView({ plan }: { plan: Plan }) {
-  const total = plan.costs.reduce((t, c) => t + c.amount, 0) + plan.days.reduce((t, d) => t + d.items.reduce((s, i) => s + (i.status === 'skipped' ? 0 : i.cost ?? 0), 0), 0);
-  return (
-    <div className="hidden p-2 print:block">
-      <div className="border-b border-ink pb-4">
-        <div className="eyebrow">{KINDS.find(k => k.id === plan.kind)!.label}</div>
-        <div className="font-serif text-[44px] leading-none font-semibold">{plan.title}</div>
-        <div className="pt-2 text-[13px] text-muted">{[plan.destination, dateRange(plan.days[0].date, plan.days[plan.days.length - 1].date)].filter(Boolean).join(' · ')}</div>
-      </div>
-      {plan.days.map(d => (
-        <div key={d.date} className="break-inside-avoid border-b border-line py-4">
-          <div className="pb-2 font-serif text-2xl font-medium italic">{longDay(d.date)}</div>
-          <div className="grid grid-cols-[150px_1fr] gap-y-1.5 text-[14px]">
-            {ordered(d.items).filter(i => i.status !== 'skipped').map(i => (
-              <div key={i.id} className="contents"><span className="num text-muted">{when(i)}</span><span><span className="font-semibold">{i.title}</span>{i.place ? `, ${i.place}` : ''}</span></div>
-            ))}
-          </div>
-        </div>
-      ))}
-      {total > 0 && <div className="flex items-baseline justify-between pt-4"><span className="eyebrow">Estimated cost</span><span className="num font-serif text-3xl font-semibold">{money(total)}</span></div>}
-    </div>
-  );
+  return <div className="hidden p-2 print:block"><Itinerary plan={plan} /></div>;
 }

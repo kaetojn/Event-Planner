@@ -4,6 +4,14 @@ export type Detail = 'half' | 'fixed' | 'loose';
 export type Part = 'morning' | 'afternoon' | 'evening';
 export type Status = 'todo' | 'done' | 'skipped';
 export type Theme = 'system' | 'light' | 'dark';
+export type Travel = 'drive' | 'walk' | 'transit';
+
+/** Who can open a plan that is kept in an account. */
+export interface Access { role: 'owner' | 'editor'; owner: string; editors: string[]; view: string | null }
+export interface Session { token: string; user: { email: string; name: string } }
+export interface Features { ai: boolean; places: boolean }
+export interface FoundPlace { id: string; name: string; address: string; lat: number; lng: number; type?: string }
+export interface Suggestion { title: string; start: string; end?: string; place?: string; address?: string; lat?: number; lng?: number; rating?: number; cost?: number; why: string }
 
 export interface Item {
   id: string;
@@ -12,8 +20,12 @@ export interface Item {
   start?: string;
   end?: string;
   part?: Part;
-  /** Where it happens, as the person typed it. */
+  /** Where it happens: a name the person typed, or one chosen from a place search. */
   place?: string;
+  /** Set when the place came from a search, so travel time can be worked out. */
+  address?: string;
+  lat?: number;
+  lng?: number;
   note?: string;
   cost?: number;
   status: Status;
@@ -35,6 +47,8 @@ export interface Plan {
   days: Day[];
   tasks: Task[];
   costs: Cost[];
+  /** How the group gets between stops. Drives travel times. */
+  travel?: Travel;
   createdAt: string;
   updatedAt: string;
 }

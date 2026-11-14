@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { Person } from '@/components/icons';
 import { Button, Eyebrow, IconButton } from '@/components/ui';
-import { addPlan, go, plansAtom, profileAtom } from '@/lib/store';
+import { addPlan, go, plansAtom, profileAtom, sessionAtom, syncAtom } from '@/lib/store';
 import { samplePlan } from '@/lib/templates';
 import { clock, dateRange, money, ordered, today } from '@/lib/time';
 import { KINDS, type Plan } from '@/lib/types';
@@ -27,6 +27,8 @@ function standing(p: Plan): { when: string; detail: string } {
 export function Home() {
   const plans = useAtomValue(plansAtom);
   const profile = useAtomValue(profileAtom);
+  const session = useAtomValue(sessionAtom);
+  const sync = useAtomValue(syncAtom);
   const now = today();
   // Plans that are under way or coming up lead, soonest first. Past plans follow, most recent first.
   const live = plans.filter(p => last(p) >= now).sort((a, b) => first(a).localeCompare(first(b)));
@@ -76,6 +78,12 @@ export function Home() {
           <Button className="self-start" onClick={() => { const p = samplePlan(); addPlan(p); go(`/plan/${p.id}`); }}>Open a sample weekend</Button>
         </section>
       )}
+
+      <p className="mt-auto text-[13px] leading-relaxed text-muted" role="status">
+        {session
+          ? sync === 'offline' ? 'Could not reach the server. Changes are kept on this device and will be saved when you are back online.' : sync === 'saving' ? 'Saving…' : `Saved to ${session.user.email}`
+          : <>Saved on this device only. <a href="#/profile" className="font-medium text-ink underline underline-offset-4">Sign in</a> to keep plans in an account, share them and get suggestions.</>}
+      </p>
     </main>
   );
 }
