@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Two themes share one set of names. Components only ever use the names. */
+:root, [data-theme="light"] {
+  --ground: #f7f7f5; --surface: #ffffff; --ink: #15181b; --muted: #5b6066;
+  --line: #e3e3df; --edge: #d9d9d4; --ring: #8c9096;
+  --accent: #1e4a3d; --on-accent: #ffffff; --tint: #e6eeea;
+  --brass: #7d5f27; --bad: #a8322b;
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --ground: #101311; --surface: #181c1a; --ink: #f2f1ec; --muted: #a3a8a4;
+  --line: #2a302d; --edge: #3a413d; --ring: #7c837e;
+  --accent: #8fc7b0; --on-accent: #101311; --tint: #1d2b26;
+  --brass: #c9a96a; --bad: #f08a80;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-tint: var(--tint);
+  --color-brass: var(--brass);
+  --color-bad: var(--bad);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-rise: rise 0.36s var(--ease-out-expo) both;
+  --animate-fade: fade 0.18s ease-out both;
+  --animate-sheet: sheet 0.28s var(--ease-out-expo) both;
+  --animate-pop: pop 0.36s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes sheet { from { opacity: 0; transform: translateY(24px); } }
+  @keyframes pop { from { transform: scale(0.4); } }
+}
+
+@layer base {
+  * { min-width: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-ground text-ink font-sans antialiased; -webkit-tap-highlight-color: transparent; }
+  button, [role="button"], summary { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input, textarea { caret-color: var(--accent); }
+  input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; }
+  input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+}
+
+/* The small brass label that sits above headings. */
+@utility eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+@utility num { font-variant-numeric: tabular-nums; }
+@utility stagger { & > * { animation: var(--animate-rise); } & > :nth-child(2) { animation-delay: 0.04s; } & > :nth-child(3) { animation-delay: 0.08s; } & > :nth-child(n + 4) { animation-delay: 0.12s; } }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Printing a plan gives the clean itinerary only: this is "Save as PDF". */
+@media print {
+  :root, [data-theme] { --ground: #fff; --surface: #fff; --ink: #000; --muted: #444; --line: #ccc; --brass: #6b5120; }
+  body { background: #fff; }
+}
