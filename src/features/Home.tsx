@@ -1,9 +1,8 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
-import { useState } from 'react';
-import { Person, Refresh } from '@/components/icons';
+import { Person } from '@/components/icons';
 import { Button, Eyebrow, IconButton, Page, ScreenHeading, useSwipe } from '@/components/ui';
-import { addPlan, go, lastSyncAtom, plansAtom, profileAtom, refreshPlans, removePlan, sessionAtom, syncAtom } from '@/lib/store';
+import { addPlan, go, plansAtom, profileAtom, removePlan, sessionAtom, syncAtom } from '@/lib/store';
 import { samplePlan } from '@/lib/templates';
 import { clock, dateRange, money, ordered, today } from '@/lib/time';
 import { KINDS, type Plan } from '@/lib/types';
@@ -43,8 +42,6 @@ export function Home() {
   const profile = useAtomValue(profileAtom);
   const session = useAtomValue(sessionAtom);
   const sync = useAtomValue(syncAtom);
-  const lastSync = useAtomValue(lastSyncAtom);
-  const [refreshing, setRefreshing] = useState(false);
   const now = today();
   // Plans that are under way or coming up lead, soonest first. Past plans follow, most recent first.
   const live = plans.filter(p => last(p) >= now).sort((a, b) => first(a).localeCompare(first(b)));
@@ -55,10 +52,7 @@ export function Home() {
     <Page className="stagger gap-8 pb-10">
       <header className="flex items-center justify-between">
         <div className="font-serif text-[26px] leading-none font-medium">Plan <span className="italic">A</span></div>
-        <div className="flex gap-2">
-          <IconButton label="Check for plan updates" disabled={refreshing} onClick={async () => { if (!session) return location.reload(); setRefreshing(true); await refreshPlans(); setRefreshing(false); }} className="border border-edge bg-surface"><Refresh className={refreshing ? 'animate-spin' : ''} width={18} height={18} /></IconButton>
-          <IconButton label={session ? 'Your profile' : 'Sign in or create an account'} onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">{session && profile.name ? profile.name[0].toUpperCase() : <Person width={18} height={18} />}</IconButton>
-        </div>
+        <IconButton label={session ? 'Your profile' : 'Sign in or create an account'} onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">{session && profile.name ? profile.name[0].toUpperCase() : <Person width={18} height={18} />}</IconButton>
       </header>
 
       <section className="flex flex-col gap-4">
@@ -81,7 +75,7 @@ export function Home() {
 
       <p className="mt-auto border-t border-line pt-5 text-[13px] leading-relaxed text-muted" role="status">
         {session
-          ? sync === 'offline' ? 'Could not reach the server. Changes are kept on this device and will be saved when you are back online.' : sync === 'saving' || refreshing ? 'Checking for updates…' : `Saved to ${session.user.email}${lastSync ? ` · checked ${new Date(lastSync).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}` : ''}`
+          ? sync === 'offline' ? 'Could not reach the server. Changes are kept on this device and will be saved when you are back online.' : sync === 'saving' ? 'Saving…' : `Saved to ${session.user.email}`
           : <>Saved on this device only. <a href="#/profile" className="font-medium text-ink underline underline-offset-4">Sign in</a> to keep plans in an account, share them and get suggestions.</>}
       </p>
     </Page>

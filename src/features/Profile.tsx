@@ -1,11 +1,11 @@
 import clsx from 'clsx';
 import { useAtom, useAtomValue } from 'jotai';
 import { useState } from 'react';
-import { Back } from '@/components/icons';
+import { Back, Refresh } from '@/components/icons';
 import { PlaceField } from '@/components/PlaceField';
 import { Button, Eyebrow, Field, IconButton, Page, ScreenHeading, Segmented } from '@/components/ui';
 import { api } from '@/lib/api';
-import { featuresAtom, go, plansAtom, profileAtom, sessionAtom, signIn, signOut, themeAtom } from '@/lib/store';
+import { featuresAtom, go, plansAtom, profileAtom, refreshPlans, sessionAtom, signIn, signOut, themeAtom } from '@/lib/store';
 
 const INTERESTS = ['Food and dining', 'Spa and wellness', 'Beaches', 'Nightlife', 'Art and museums', 'Shopping', 'Outdoors', 'Live music', 'Architecture', 'Sport', 'Wine and cocktails', 'Hidden gems'];
 
@@ -22,6 +22,24 @@ function Appearance() {
       <Segmented label="Appearance" value={theme} onChange={setTheme} options={[{ id: 'system', label: 'Match device' }, { id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} />
     </section>
   );
+}
+
+/** iPhone Home Screen apps have no browser chrome, so version refresh belongs in Settings. */
+function AppRefresh() {
+  const session = useAtomValue(sessionAtom);
+  const [busy, setBusy] = useState(false);
+  const refresh = async () => {
+    setBusy(true);
+    if (session) await refreshPlans();
+    const url = new URL(location.href);
+    url.searchParams.set('refresh', Date.now().toString());
+    location.replace(url.toString());
+  };
+  return <section className="flex flex-col gap-3 border-t border-line pt-7">
+    <Eyebrow>App</Eyebrow>
+    <p className="text-[15px] leading-relaxed text-muted">Load the newest version of Plan A. {session ? 'Your plans are synced first.' : 'Plans saved on this device stay here.'}</p>
+    <Button className="self-start" disabled={busy} onClick={() => void refresh()}><Refresh className={busy ? 'animate-spin' : ''} width={17} height={17} />{busy ? 'Refreshing…' : 'Refresh app'}</Button>
+  </section>;
 }
 
 /** Sign in or create an account. Without one, plans stay on this device. */
@@ -61,6 +79,7 @@ function Account() {
       </form>
 
       <Appearance />
+      <AppRefresh />
 
       {plans.length > 0 && (
         <section className="flex flex-col gap-3 border-t border-line pt-7">
@@ -114,6 +133,7 @@ function About() {
       <Field label="Anything to avoid" value={profile.avoid} onChange={e => setProfile({ ...profile, avoid: e.target.value })} placeholder="Early starts, seafood, long drives" />
 
       <Appearance />
+      <AppRefresh />
 
       <section className="flex flex-col gap-3 border-t border-line pt-7">
         <Eyebrow>Account</Eyebrow>

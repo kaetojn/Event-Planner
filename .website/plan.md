@@ -37,6 +37,7 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 11 | Add plan editing (title, destination, dates) with day/item migration, and swipe-to-reveal plan deletion with a confirmation safeguard | impeccable shape → build → proof-of-work | 7 | done |
 | 12 | Add an in-app sync/refresh control and clearly communicate when plan updates were last checked | build → proof-of-work | 7 | done |
 | 13 | Verify cross-date, cross-zone, edited-date, calendar, shared-plan, deletion and refresh flows; typecheck and build | impeccable audit → proof-of-work | 8, 9, 10, 11, 12 | done |
+| 14 | Put a reliable app-version refresh action in Settings/Profile for iPhone Add to Home Screen mode, syncing account data first and preserving the current screen | build → proof-of-work | 12 | done |
 
 ## Deferred
 - Worker modularization and CI hardening — worthwhile code-health work, but not needed to safely deliver this design refinement.
