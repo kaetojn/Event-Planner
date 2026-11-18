@@ -104,12 +104,12 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center print:hidden">
       <div className="absolute inset-0 animate-fade bg-black/45" onClick={onClose} />
         <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-lg animate-sheet flex-col rounded-t-[28px] bg-ground shadow-[var(--shadow)] outline-none md:rounded-[28px]">
-        <div className="flex items-center justify-between px-6 pt-5 pb-2">
+        <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-2">
           <h2 className="font-serif text-[28px] leading-none font-semibold">{title}</h2>
           <IconButton label="Close" onClick={onClose} className="-mr-3 text-muted"><Cross /></IconButton>
         </div>
-        <div className={clsx('flex flex-col gap-4 overflow-y-auto overscroll-contain px-6 pt-3', footer ? 'pb-3' : 'pb-[max(20px,env(safe-area-inset-bottom))]')}>{children}</div>
-        {footer && <div className="flex gap-2 border-t border-line px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">{footer}</div>}
+        <div className={clsx('flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-6 pt-3 [&>*]:shrink-0', footer ? 'pb-5' : 'pb-[max(20px,env(safe-area-inset-bottom))]')}>{children}</div>
+        {footer && <div className="flex shrink-0 gap-2 border-t border-line px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>
     </div>,
     document.body,

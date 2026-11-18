@@ -175,9 +175,12 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const [fromSpot, setFromSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.fromAddress, lat: item?.flight?.fromLat, lng: item?.flight?.fromLng });
   const [to, setTo] = useState(item?.flight?.to ?? '');
   const [toSpot, setToSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.toAddress, lat: item?.flight?.toLat, lng: item?.flight?.toLng });
+  const [detailsOpen, setDetailsOpen] = useState(!!item);
+  const [dirty, setDirty] = useState(false);
   const step = plan.detail === 'half' ? 1800 : 300;
   const badEnd = when === 'time' && !!end && (!endDate || endDate < startDate || (endDate === startDate && end <= start));
   const effectiveTitle = title.trim() || (category === 'flight' && from.trim() && to.trim() ? `Flight ${from.trim()} to ${to.trim()}` : '');
+  const attemptClose = () => { if (!dirty || confirm('Discard the changes to this item?')) onClose(); };
   const save = () => {
     saveItem(plan.id, day.date, {
       id: item?.id ?? uid(), title: effectiveTitle, category, status: item?.status ?? 'todo',
@@ -192,46 +195,67 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   return (
     <Sheet
       title={item ? 'Edit' : 'Add to the day'}
-      onClose={onClose}
+      onClose={attemptClose}
       footer={<>
-        {item && <Button variant="danger" onClick={() => { removeItem(plan.id, day.date, item.id); onClose(); }}>Remove</Button>}
+        {item && <Button variant="danger" onClick={() => { if (confirm(`Remove "${item.title}"?`)) { removeItem(plan.id, day.date, item.id); onClose(); } }}>Remove</Button>}
         <Button variant="primary" className="flex-1" disabled={!effectiveTitle || !startDate || (when === 'time' && !start) || badEnd || (category === 'flight' && (!from.trim() || !to.trim() || !endDate || !end))} onClick={save}>{item ? 'Save' : 'Add'}</Button>
       </>}
     >
-      <Eyebrow>{longDay(day.date)}</Eyebrow>
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label="Category">
-        {ITEM_CATEGORIES.map(c => <button key={c.id} type="button" aria-pressed={category === c.id} onClick={() => { setCategory(c.id); if (c.id === 'flight') setWhen('time'); }} className={clsx('inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm transition', category === c.id ? 'bg-ink font-semibold text-ground' : 'border border-edge bg-surface font-medium')}><CategoryIcon category={c.id} width={17} height={17} />{c.label}</button>)}
-      </div>
-      <Field label="What" value={title} onChange={e => setTitle(e.target.value)} placeholder={category === 'flight' ? 'Optional — built from airports' : 'Dinner, check-in, museum'} autoFocus={!item && category !== 'flight'} />
-      <Segmented label="When" value={when} onChange={setWhen} options={[{ id: 'time', label: 'At a set time' }, { id: 'part', label: 'Part of the day' }]} />
-      {when === 'time' ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-4" onChangeCapture={() => setDirty(true)}>
+        <Eyebrow>{longDay(day.date)}</Eyebrow>
+        <Field label="What" value={title} onChange={e => setTitle(e.target.value)} placeholder={category === 'flight' ? 'Optional — built from airports' : 'Dinner, check-in, museum'} hint={category === 'flight' ? "Optional — we'll name it from the airports." : 'Required · Title and start are all you need.'} required={category !== 'flight'} autoFocus={!item && category !== 'flight'} />
+        <Segmented label="When" value={when} onChange={value => { setWhen(value); setDirty(true); }} options={[{ id: 'time', label: 'At a set time' }, { id: 'part', label: 'Part of the day' }]} />
+        {when === 'time' ? (
           <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
             <Field label={category === 'flight' ? 'Departs' : 'Start date'} type="date" value={startDate} min={plan.days[0].date} max={plan.days[plan.days.length - 1].date} onChange={e => { setStartDate(e.target.value); if (e.target.value > endDate) setEndDate(e.target.value); }} />
             <Field label="Time" type="time" step={step} value={start} onChange={e => setStart(e.target.value)} />
           </div>
-          {category === 'flight' && <Field label="Departure time zone" list="plan-a-timezones" value={startZone} onChange={e => setStartZone(e.target.value)} />}
-          <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
-            <Field label={category === 'flight' ? 'Arrives' : 'End date'} type="date" value={endDate} min={startDate} max={plan.days[plan.days.length - 1].date} onChange={e => setEndDate(e.target.value)} />
-            <Field label="End time (optional)" type="time" step={step} value={end} onChange={e => setEnd(e.target.value)} hint={badEnd ? 'Must be after the start' : undefined} />
+        ) : (
+          <div className="flex flex-col gap-3"><Field label="Date" type="date" value={startDate} min={plan.days[0].date} max={plan.days[plan.days.length - 1].date} onChange={e => setStartDate(e.target.value)} /><Segmented label="Part of the day" value={part} onChange={value => { setPart(value); setDirty(true); }} options={PARTS} /></div>
+        )}
+
+        <button type="button" aria-expanded={detailsOpen} onClick={() => setDetailsOpen(open => !open)} className="flex h-12 items-center justify-between border-y border-line text-left text-sm font-semibold">
+          <span>{detailsOpen ? 'Hide details' : 'More details'}</span>
+          <span className="flex items-center gap-1.5 font-medium text-muted"><CategoryIcon category={category} width={16} height={16} />{ITEM_CATEGORIES.find(c => c.id === category)?.label}</span>
+        </button>
+
+        {detailsOpen && <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Category</span>
+            <div className="flex min-h-11 shrink-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label="Category">
+              {ITEM_CATEGORIES.map(c => <button key={c.id} type="button" aria-pressed={category === c.id} onClick={() => { setCategory(c.id); setDirty(true); if (c.id === 'flight') setWhen('time'); }} className={clsx('inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm transition', category === c.id ? 'bg-ink font-semibold text-ground' : 'border border-edge bg-surface font-medium')}><CategoryIcon category={c.id} width={17} height={17} />{c.label}</button>)}
+            </div>
           </div>
-          {category === 'flight' && <Field label="Arrival time zone" list="plan-a-timezones" value={endZone} onChange={e => setEndZone(e.target.value)} />}
+
+          {when === 'time' && category === 'flight' && <div className="flex flex-col gap-3 border-y border-line py-4">
+            <Field label="Departure time zone" list="plan-a-timezones" value={startZone} onChange={e => setStartZone(e.target.value)} />
+            <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
+              <Field label="Arrives" type="date" value={endDate} min={startDate} max={plan.days[plan.days.length - 1].date} onChange={e => setEndDate(e.target.value)} />
+              <Field label="Arrival time" type="time" step={step} value={end} onChange={e => setEnd(e.target.value)} hint={badEnd ? 'Must be after departure' : undefined} />
+            </div>
+            <Field label="Arrival time zone" list="plan-a-timezones" value={endZone} onChange={e => setEndZone(e.target.value)} />
+          </div>}
+
+          {when === 'time' && category !== 'flight' && (end ? <div className="flex flex-col gap-2 border-y border-line py-4">
+            <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
+              <Field label="End date" type="date" value={endDate} min={startDate} max={plan.days[plan.days.length - 1].date} onChange={e => setEndDate(e.target.value)} />
+              <Field label="End time" type="time" step={step} value={end} onChange={e => setEnd(e.target.value)} hint={badEnd ? 'Must be after the start' : undefined} />
+            </div>
+            <button type="button" className="h-11 self-start text-sm font-medium text-muted underline underline-offset-4" onClick={() => { setEnd(''); setDirty(true); }}>Remove end time</button>
+          </div> : <Button className="self-start" onClick={() => { const next = addMinutes(startDate, start, 60); setEndDate(next.date); setEnd(next.time); setDirty(true); }}>Add end time</Button>)}
+
           <datalist id="plan-a-timezones">{['America/Toronto', 'America/Vancouver', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Australia/Sydney', 'UTC'].map(z => <option key={z} value={z} />)}</datalist>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3"><Field label="Date" type="date" value={startDate} min={plan.days[0].date} max={plan.days[plan.days.length - 1].date} onChange={e => setStartDate(e.target.value)} /><Segmented label="Part of the day" value={part} onChange={setPart} options={PARTS} /></div>
-      )}
-      {category === 'flight' ? <>
-        <div className="grid grid-cols-2 gap-3"><Field label="Airline (optional)" value={airline} onChange={e => setAirline(e.target.value)} placeholder="Air Canada" /><Field label="Flight number" value={flightNumber} onChange={e => setFlightNumber(e.target.value)} placeholder="AC 123" /></div>
-        <PlaceField label="Departure airport" value={from} placeholder="Airport name or code" hint={fromSpot.address} onText={text => { setFrom(text); setFromSpot({}); }} onPick={p => { setFrom(p.name); setFromSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
-        <PlaceField label="Arrival airport" value={to} placeholder="Airport name or code" hint={toSpot.address} onText={text => { setTo(text); setToSpot({}); }} onPick={p => { setTo(p.name); setToSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
-      </> : <PlaceField label="Where (optional)" value={place} placeholder="Name or address" hint={spot.address} near={plan.at}
-        onText={text => { setPlace(text); setSpot({}); }}
-        onPick={p => { setPlace(p.name); setSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />}
-      {item && <section className="flex flex-col gap-2 border-t border-line pt-4"><div className="text-sm font-semibold">Calendar</div><div className="grid grid-cols-2 gap-2"><Button onClick={() => downloadItemCalendar(plan, item, day.date)}>Download event</Button><a href={googleCalendarUrl(plan, item, day.date)} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-full border border-edge bg-surface px-4 text-sm font-semibold">Open in Google</a></div></section>}
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Cost (optional)" type="number" inputMode="decimal" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" />
-        <Field label="Note (optional)" value={note} onChange={e => setNote(e.target.value)} />
+          {category === 'flight' ? <>
+            <div className="grid grid-cols-2 gap-3"><Field label="Airline (optional)" value={airline} onChange={e => setAirline(e.target.value)} placeholder="Air Canada" /><Field label="Flight number" value={flightNumber} onChange={e => setFlightNumber(e.target.value)} placeholder="AC 123" /></div>
+            <PlaceField label="Departure airport" value={from} placeholder="Airport name or code" hint={fromSpot.address} onText={text => { setFrom(text); setFromSpot({}); }} onPick={p => { setFrom(p.name); setFromSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
+            <PlaceField label="Arrival airport" value={to} placeholder="Airport name or code" hint={toSpot.address} onText={text => { setTo(text); setToSpot({}); }} onPick={p => { setTo(p.name); setToSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
+          </> : <PlaceField label="Where (optional)" value={place} placeholder="Name or address" hint={spot.address} near={plan.at}
+            onText={text => { setPlace(text); setSpot({}); }}
+            onPick={p => { setPlace(p.name); setSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />}
+          <Field className="max-w-40" label="Cost (optional)" type="number" inputMode="decimal" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" />
+          <label className="flex flex-col gap-1.5"><span className="text-sm font-semibold">Note (optional)</span><textarea value={note} onChange={e => setNote(e.target.value)} rows={3} className="w-full resize-y rounded-xl border border-edge bg-surface px-3 py-3 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" /></label>
+          {item && <section className="flex flex-col gap-2 border-t border-line pt-4"><div className="text-sm font-semibold">Calendar</div><div className="grid grid-cols-2 gap-2"><Button onClick={() => downloadItemCalendar(plan, item, day.date)}>Download event</Button><a href={googleCalendarUrl(plan, item, day.date)} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-full border border-edge bg-surface px-4 text-sm font-semibold">Open in Google</a></div></section>}
+        </div>}
       </div>
     </Sheet>
   );
