@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { Person } from '@/components/icons';
-import { Button, Eyebrow, IconButton } from '@/components/ui';
+import { Button, Eyebrow, IconButton, Page, ScreenHeading } from '@/components/ui';
 import { addPlan, go, plansAtom, profileAtom, sessionAtom, syncAtom } from '@/lib/store';
 import { samplePlan } from '@/lib/templates';
 import { clock, dateRange, money, ordered, today } from '@/lib/time';
@@ -36,7 +36,7 @@ export function Home() {
   const list = [...live, ...past];
 
   return (
-    <main className="stagger mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-7 px-6 pt-5 pb-10">
+    <Page className="stagger gap-8 pb-10">
       <header className="flex items-center justify-between">
         <div className="font-serif text-[26px] leading-none font-medium">Plan <span className="italic">A</span></div>
         <IconButton label={session ? 'Your profile' : 'Sign in or create an account'} onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">
@@ -45,7 +45,7 @@ export function Home() {
       </header>
 
       <section className="flex flex-col gap-4">
-        <h1 className="font-serif text-[44px] leading-[1.02] font-semibold tracking-[-0.01em]">What are we <span className="font-medium italic">planning</span> next{profile.name ? `, ${profile.name}` : ''}?</h1>
+        <ScreenHeading title={<>What are we <em>planning</em> next{profile.name ? `, ${profile.name}` : ''}?</>} detail={list.length > 0 ? 'Your next plan is ready when you are. Keep the details here, and the day moving once it starts.' : undefined} />
         <Button variant="primary" size="lg" onClick={() => go('/new')}>Begin a plan</Button>
       </section>
 
@@ -57,14 +57,14 @@ export function Home() {
             const lead = n === 0 && live.length > 0;
             const total = planned(p);
             return (
-              <button key={p.id} type="button" onClick={() => go(`/plan/${p.id}`)} className={clsx('flex flex-col gap-3.5 rounded-2xl p-[18px] text-left transition active:scale-[.99]', lead ? 'bg-ink text-ground' : 'border border-line bg-surface')}>
-                <span className={clsx('flex items-center justify-between text-xs font-medium', lead ? 'opacity-80' : 'text-muted')}>
-                  <span>{KINDS.find(k => k.id === p.kind)?.label}</span>
-                  <span>{s.when === 'Happening now' || s.when === 'Past' ? s.when : `${dateRange(first(p), last(p))} · ${s.when}`}</span>
+              <button key={p.id} type="button" onClick={() => go(`/plan/${p.id}`)} className={clsx('group flex flex-col gap-3.5 rounded-2xl p-[18px] text-left transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[.99]', lead ? 'bg-ink text-ground' : 'border border-line bg-surface hover:border-ink')}>
+                <span className={clsx('flex items-center justify-between text-xs font-semibold', lead ? 'opacity-80' : 'text-muted')}>
+                  <span className="uppercase tracking-[.1em]">{KINDS.find(k => k.id === p.kind)?.label}</span>
+                  <span>{s.when === 'Happening now' || s.when === 'Past' ? s.when : `${dateRange(first(p), last(p))}`}</span>
                 </span>
                 <span className="font-serif text-3xl leading-none font-semibold">{p.title}</span>
-                <span className={clsx('flex justify-between gap-3 text-[13px]', lead ? 'opacity-80' : 'text-muted')}>
-                  <span className="truncate">{s.detail}</span>
+                <span className={clsx('flex justify-between gap-3 border-t pt-3 text-[13px]', lead ? 'border-ground/20 opacity-80' : 'border-line text-muted')}>
+                  <span className="truncate"><span className="font-medium">{s.when}</span> · {s.detail}</span>
                   {total > 0 && <span className="num shrink-0">{money(total)} planned</span>}
                 </span>
               </button>
@@ -79,11 +79,11 @@ export function Home() {
         </section>
       )}
 
-      <p className="mt-auto text-[13px] leading-relaxed text-muted" role="status">
+      <p className="mt-auto border-t border-line pt-5 text-[13px] leading-relaxed text-muted" role="status">
         {session
           ? sync === 'offline' ? 'Could not reach the server. Changes are kept on this device and will be saved when you are back online.' : sync === 'saving' ? 'Saving…' : `Saved to ${session.user.email}`
           : <>Saved on this device only. <a href="#/profile" className="font-medium text-ink underline underline-offset-4">Sign in</a> to keep plans in an account, share them and get suggestions.</>}
       </p>
-    </main>
+    </Page>
   );
 }

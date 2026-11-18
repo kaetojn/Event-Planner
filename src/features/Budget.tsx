@@ -36,10 +36,10 @@ export function Budget({ plan }: { plan: Plan }) {
       <Field label="Budget in dollars" type="number" inputMode="decimal" min={0} value={plan.budget ?? ''} placeholder="No budget set"
         onChange={e => updatePlan(plan.id, p => ({ ...p, budget: e.target.value === '' ? undefined : Math.max(0, +e.target.value) }))} />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-line pt-6">
         <Eyebrow>Bookings and fixed costs</Eyebrow>
         {plan.costs.length > 0 && (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col border-b border-line">
             {plan.costs.map(c => (
               <li key={c.id} className="flex min-h-[52px] items-center gap-3 border-t border-line">
                 <span className="flex-1 text-[15px]">{c.label}</span>
@@ -56,10 +56,10 @@ export function Budget({ plan }: { plan: Plan }) {
         </form>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-line pt-6">
         <Eyebrow>On the timeline</Eyebrow>
         {timed.length ? (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col border-b border-line">
             {timed.map(i => (
               <li key={i.id} className="flex min-h-[52px] items-center gap-3 border-t border-line">
                 <span className="flex flex-1 flex-col py-2"><span className="text-[15px]">{i.title}</span><span className="text-[13px] text-muted">{shortDay(i.date)}</span></span>

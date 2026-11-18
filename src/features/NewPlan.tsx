@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Back } from '@/components/icons';
 import { PlaceField } from '@/components/PlaceField';
-import { Button, Choice, Eyebrow, Field, IconButton } from '@/components/ui';
+import { Button, Choice, Eyebrow, Field, IconButton, Page } from '@/components/ui';
 import { addPlan, go } from '@/lib/store';
 import { starterTasks } from '@/lib/templates';
 import { daysBetween, today, uid } from '@/lib/time';
@@ -38,11 +38,11 @@ export function NewPlan() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-6 pt-5 pb-[max(24px,env(safe-area-inset-bottom))]">
+    <Page className="gap-8">
       <header className="flex items-center gap-4">
         <IconButton label={step === 1 ? 'Back to your plans' : 'Previous question'} onClick={() => (step === 1 ? go('/') : setStep(step - 1))} className="-ml-3"><Back /></IconButton>
         <div role="img" aria-label={`Question ${step} of ${STEPS}`} className="grid flex-1 grid-cols-5 gap-1.5">
-          {Array.from({ length: STEPS }, (_, i) => <span key={i} className={`h-[3px] rounded-full transition-colors ${i < step ? 'bg-ink' : 'bg-edge'}`} />)}
+          {Array.from({ length: STEPS }, (_, i) => <span key={i} className={`h-1 rounded-full transition-colors ${i < step ? 'bg-accent' : 'bg-edge'}`} />)}
         </div>
         <div className="num text-[13px] font-medium text-muted">{step} of {STEPS}</div>
       </header>
@@ -88,8 +88,10 @@ export function NewPlan() {
         </>)}
       </div>
 
-      <Button variant="primary" size="lg" disabled={!canContinue} onClick={() => (step < STEPS ? setStep(step + 1) : finish())}>{step < STEPS ? 'Continue' : 'Create the plan'}</Button>
-    </main>
+      <div className="border-t border-line pt-4">
+        <Button variant="primary" size="lg" className="w-full" disabled={!canContinue} onClick={() => (step < STEPS ? setStep(step + 1) : finish())}>{step < STEPS ? 'Continue' : 'Create the plan'}</Button>
+      </div>
+    </Page>
   );
 }
 

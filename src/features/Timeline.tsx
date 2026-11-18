@@ -25,7 +25,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
 
   if (!items.length) {
     return (
-      <section className="flex animate-rise flex-col gap-3 pt-6">
+      <section className="flex animate-rise flex-col gap-4 pt-7">
         <Eyebrow>{longDay(day.date)}</Eyebrow>
         <p className="font-serif text-[28px] leading-tight font-medium">Nothing planned for this day yet.</p>
         <div className="flex flex-wrap gap-2">
@@ -91,7 +91,7 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
         {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
         {item.end && <div className="pt-0.5 font-normal text-muted">{clock(item.end)}</div>}
       </div>
-      <button type="button" onClick={onOpen} className="flex flex-1 flex-col gap-0.5 text-left">
+      <button type="button" onClick={onOpen} className="-mx-2 flex flex-1 flex-col gap-0.5 rounded-xl px-2 py-1 text-left transition-colors hover:bg-wash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
         <span className={clsx('font-serif text-2xl leading-[1.15] transition-colors', done ? 'font-medium text-muted line-through' : skipped ? 'font-medium text-muted' : 'font-semibold')}>{item.title}</span>
         {details.length > 0 && <span className="text-[13px] text-muted">{details.join(' · ')}</span>}
         {item.note && <span className="text-[13px] text-muted">{item.note}</span>}

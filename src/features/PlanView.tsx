@@ -50,9 +50,10 @@ export function PlanView({ id }: { id: string }) {
               <IconButton label={`Add to ${longDay(day.date)}`} onClick={() => { setMode('timeline'); setAdding(true); }} className="bg-accent text-on-accent"><Plus width={20} height={20} /></IconButton>
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Eyebrow>{kind} · {plan.days.length === 1 ? shortDay(plan.days[0].date) : `${plan.days.length} days`}{plan.destination ? ` · ${plan.destination}` : ''}{access?.role === 'editor' ? ' · Shared with you' : ''}</Eyebrow>
             <h1 className="font-serif text-[40px] leading-none font-semibold tracking-[-0.01em]">{plan.title}</h1>
+            {mode === 'timeline' && <p className="text-[13px] text-muted">{longDay(day.date)} · {day.items.filter(item => item.status === 'todo').length} {day.items.filter(item => item.status === 'todo').length === 1 ? 'thing' : 'things'} left</p>}
           </div>
           {byDay && plan.days.length > 1 && (
             <nav aria-label="Days" className="-mx-6 flex gap-5 overflow-x-auto border-b border-line px-6 [scrollbar-width:none]">
@@ -72,9 +73,9 @@ export function PlanView({ id }: { id: string }) {
       </main>
 
       <nav aria-label="Modes" className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-lg px-4 pb-[max(16px,env(safe-area-inset-bottom))] print:hidden">
-        <div className="grid grid-cols-4 gap-1 rounded-full border border-line bg-surface/95 p-1.5 shadow-lg backdrop-blur">
+        <div className="grid grid-cols-4 gap-1 rounded-full border border-line bg-surface/95 p-1.5 shadow-[var(--shadow)] backdrop-blur">
           {MODES.map(m => (
-            <button key={m.id} type="button" aria-current={m.id === mode} onClick={() => { setMode(m.id); scrollTo(0, 0); }} className={clsx('h-11 rounded-full text-[13px] transition', m.id === mode ? 'bg-ink font-semibold text-ground' : 'font-medium text-muted')}>{m.label}</button>
+            <button key={m.id} type="button" aria-current={m.id === mode} onClick={() => { setMode(m.id); scrollTo(0, 0); }} className={clsx('h-11 rounded-full text-[13px] transition-[background-color,color,transform] duration-200 active:scale-[.97]', m.id === mode ? 'bg-ink font-semibold text-ground' : 'font-medium text-muted hover:bg-wash hover:text-ink')}>{m.label}</button>
           ))}
         </div>
       </nav>

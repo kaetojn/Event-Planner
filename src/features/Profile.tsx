@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { useAtom, useAtomValue } from 'jotai';
 import { useState } from 'react';
 import { Back } from '@/components/icons';
-import { Button, Eyebrow, Field, IconButton, Segmented } from '@/components/ui';
+import { Button, Eyebrow, Field, IconButton, Page, ScreenHeading, Segmented } from '@/components/ui';
 import { api } from '@/lib/api';
 import { featuresAtom, go, plansAtom, profileAtom, sessionAtom, signIn, signOut, themeAtom } from '@/lib/store';
 
@@ -47,12 +47,8 @@ function Account() {
   };
 
   return (
-    <main className="stagger mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-6 pt-5 pb-12">
-      <header className="flex flex-col gap-3">
-        <IconButton label="Back to your plans" onClick={() => go('/')} className="-ml-3"><Back /></IconButton>
-        <h1 className="font-serif text-[40px] leading-[1.05] font-semibold">{mode === 'in' ? <>Welcome <span className="font-medium italic">back</span></> : <>Create your <span className="font-medium italic">account</span></>}</h1>
-        <p className="text-[15px] leading-relaxed text-muted">{mode === 'in' ? 'Sign in to open your plans on this device.' : 'An account keeps your plans safe, lets you share them and turns on suggestions. Plans already on this device move into it.'}</p>
-      </header>
+    <Page className="stagger gap-8 pb-12">
+      <ScreenHeading action={<IconButton label="Back to your plans" onClick={() => go('/')} className="-ml-3"><Back /></IconButton>} title={mode === 'in' ? <>Welcome <em>back</em></> : <>Create your <em>account</em></>} detail={mode === 'in' ? 'Sign in to open your plans on this device.' : 'An account keeps your plans safe, lets you share them and turns on suggestions. Plans already on this device move into it.'} />
 
       <form className="flex flex-col gap-4" onSubmit={e => { e.preventDefault(); void submit(); }}>
         {mode === 'new' && <Field label="First name" value={name} onChange={e => setName(e.target.value)} autoComplete="given-name" />}
@@ -72,7 +68,7 @@ function Account() {
           <Button variant="danger" className="self-start border border-edge" onClick={() => { if (confirm('Erase every plan on this device? This cannot be undone.')) setPlans([]); }}>Erase all plans on this device</Button>
         </section>
       )}
-    </main>
+    </Page>
   );
 }
 
@@ -85,12 +81,8 @@ function About() {
   const toggle = (i: string) => setProfile({ ...profile, interests: profile.interests.includes(i) ? profile.interests.filter(x => x !== i) : [...profile.interests, i] });
 
   return (
-    <main className="stagger mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-6 pt-5 pb-12">
-      <header className="flex flex-col gap-3">
-        <IconButton label="Back to your plans" onClick={() => go('/')} className="-ml-3"><Back /></IconButton>
-        <h1 className="font-serif text-[40px] leading-none font-semibold">Your <span className="font-medium italic">profile</span></h1>
-        <p className="text-[15px] leading-relaxed text-muted">The more this knows about how you like to spend a day, the better its suggestions will be. Changes save as you make them.</p>
-      </header>
+    <Page className="stagger gap-8 pb-12">
+      <ScreenHeading action={<IconButton label="Back to your plans" onClick={() => go('/')} className="-ml-3"><Back /></IconButton>} title={<>Your <em>profile</em></>} detail="The more this knows about how you like to spend a day, the better its suggestions will be. Changes save as you make them." />
 
       <section className="flex flex-col gap-4">
         <Field label="First name" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} autoComplete="given-name" />
@@ -127,6 +119,6 @@ function About() {
         <p className="text-[13px] leading-relaxed text-muted">Suggestions are {features.ai ? 'on' : 'not set up yet'}. Place search and travel times are {features.places ? 'on' : 'not set up yet'}.</p>
         <Button className="self-start" disabled={busy} onClick={async () => { setBusy(true); await signOut(); }}>Sign out</Button>
       </section>
-    </main>
+    </Page>
   );
 }

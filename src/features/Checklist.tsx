@@ -36,9 +36,9 @@ export function Checklist({ plan }: { plan: Plan }) {
         )}
       </div>
 
-      <ul className="flex flex-col">
+      <ul className="flex flex-col border-b border-line">
         {tasks.map(t => (
-          <li key={t.id} className="flex min-h-[52px] items-center gap-1 border-t border-line">
+          <li key={t.id} className="group flex min-h-[52px] items-center gap-1 border-t border-line transition-colors hover:bg-wash">
             <div className="-ml-2"><Check state={t.done ? 'done' : 'todo'} label={t.done ? `Mark "${t.text}" as not done` : `Mark "${t.text}" as done`} onClick={() => { navigator.vibrate?.(10); set(plan.tasks.map(x => (x.id === t.id ? { ...x, done: !x.done } : x))); }} /></div>
             <span className={clsx('flex-1 py-3 pl-2 text-[15px] leading-snug transition-colors', t.done && 'text-muted line-through')}>{t.text}</span>
             <IconButton label={`Remove "${t.text}"`} onClick={() => set(plan.tasks.filter(x => x.id !== t.id))} className="-mr-3 text-muted"><Cross width={16} height={16} /></IconButton>
@@ -46,7 +46,7 @@ export function Checklist({ plan }: { plan: Plan }) {
         ))}
       </ul>
 
-      <form className="flex gap-2" onSubmit={e => { e.preventDefault(); add(); }}>
+      <form className="flex gap-2 border-t border-line pt-4" onSubmit={e => { e.preventDefault(); add(); }}>
         <input aria-label="New task" value={text} onChange={e => setText(e.target.value)} placeholder="Add a task" enterKeyHint="done" className="h-12 flex-1 rounded-xl border border-edge bg-surface px-3 text-base placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" />
         <Button type="submit" variant="primary" className="h-12" disabled={!text.trim()}>Add</Button>
       </form>

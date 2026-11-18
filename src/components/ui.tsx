@@ -11,11 +11,11 @@ export function Button({ variant = 'secondary', size = 'md', className, ...p }: 
       type="button"
       {...p}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[.97] disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[.97] disabled:pointer-events-none disabled:opacity-50',
         size === 'lg' ? 'h-[52px] px-6 text-[15px]' : 'h-11 px-4 text-sm',
-        variant === 'primary' && 'bg-accent text-on-accent',
-        variant === 'secondary' && 'border border-edge bg-surface text-ink',
-        variant === 'soft' && 'bg-tint text-accent',
+        variant === 'primary' && 'bg-accent text-on-accent hover:brightness-95',
+        variant === 'secondary' && 'border border-edge bg-surface text-ink hover:border-ink',
+        variant === 'soft' && 'bg-tint text-accent hover:brightness-[.97]',
         variant === 'ghost' && 'text-ink',
         variant === 'danger' && 'text-bad',
         className,
@@ -25,10 +25,21 @@ export function Button({ variant = 'secondary', size = 'md', className, ...p }: 
 }
 
 export function IconButton({ label, className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
-  return <button type="button" aria-label={label} {...p} className={clsx('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition active:scale-95', className)} />;
+  return <button type="button" aria-label={label} {...p} className={clsx('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-200 hover:bg-wash active:scale-95 disabled:pointer-events-none disabled:opacity-50', className)} />;
 }
 
 export const Eyebrow = ({ children, className }: { children: ReactNode; className?: string }) => <div className={clsx('eyebrow', className)}>{children}</div>;
+
+/** The shared phone-first frame keeps every screen on the same quiet editorial grid. */
+export const Page = ({ children, className }: { children: ReactNode; className?: string }) => <main className={clsx('mx-auto flex min-h-dvh w-full max-w-lg flex-col px-6 pt-5 pb-[max(32px,env(safe-area-inset-bottom))]', className)}>{children}</main>;
+
+export function ScreenHeading({ title, detail, action }: { title: ReactNode; detail?: ReactNode; action?: ReactNode }) {
+  return <header className="flex flex-col gap-2.5">
+    {action && <div>{action}</div>}
+    <h1 className="font-serif text-[40px] leading-[1.04] font-semibold tracking-[-0.015em] [&_em]:font-medium">{title}</h1>
+    {detail && <p className="max-w-[38rem] text-[15px] leading-relaxed text-muted">{detail}</p>}
+  </header>;
+}
 
 /** The round control that marks something done. It also shows a skipped state. */
 export function Check({ state, label, onClick }: { state: 'todo' | 'done' | 'skipped'; label: string; onClick: () => void }) {
@@ -92,7 +103,7 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center print:hidden">
       <div className="absolute inset-0 animate-fade bg-black/45" onClick={onClose} />
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-lg animate-sheet flex-col rounded-t-[28px] bg-ground shadow-2xl outline-none md:rounded-[28px]">
+        <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-lg animate-sheet flex-col rounded-t-[28px] bg-ground shadow-[var(--shadow)] outline-none md:rounded-[28px]">
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <h2 className="font-serif text-[28px] leading-none font-semibold">{title}</h2>
           <IconButton label="Close" onClick={onClose} className="-mr-3 text-muted"><Cross /></IconButton>
