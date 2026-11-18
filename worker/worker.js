@@ -350,9 +350,9 @@ async function route(request, env, path) {
   }
 
   if (path === '/route') {
-    const { points, mode } = await readJson(request);
+    const { points, mode, departureTime } = await readJson(request);
     if (!Array.isArray(points) || points.length < 2 || points.length > 12) throw new HttpError(400, 'Send between 2 and 12 points.');
-    return ok({ legs: await routeLegs(env, points, mode) });
+    return ok({ legs: await routeLegs(env, points, mode, departureTime) });
   }
 
   if (path === '/suggest') {
@@ -432,7 +432,7 @@ async function searchPlaces(env, textQuery, max = 5, rich = false) {
 const TRAVEL = { drive: 'DRIVE', walk: 'WALK', transit: 'TRANSIT' };
 
 /** Minutes of travel between each neighbouring pair of points. Answers are kept for 30 days. */
-async function routeLegs(env, points, mode) {
+async function routeLegs(env, points, mode, departureTime) {
   needMaps(env);
   const travelMode = TRAVEL[mode] || 'DRIVE';
   const at = p => `${(+p.lat).toFixed(4)},${(+p.lng).toFixed(4)}`;
@@ -441,7 +441,9 @@ async function routeLegs(env, points, mode) {
     const a = points[i], b = points[i + 1];
     if (![a.lat, a.lng, b.lat, b.lng].every(n => Number.isFinite(+n))) { legs.push(null); continue; }
     if (at(a) === at(b)) { legs.push({ mins: 0, km: 0 }); continue; }
-    const key = `leg:${travelMode}:${at(a)}:${at(b)}`;
+    const traffic = travelMode === 'DRIVE' && typeof departureTime === 'string' && Date.parse(departureTime) > Date.now();
+    const slot = traffic ? String(departureTime).slice(0, 13) : '';
+    const key = `leg:${travelMode}:${at(a)}:${at(b)}:${slot}`;
     let leg = await env.DB.get(key, 'json');
     if (!leg) {
       const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
@@ -451,13 +453,14 @@ async function routeLegs(env, points, mode) {
           origin: { location: { latLng: { latitude: +a.lat, longitude: +a.lng } } },
           destination: { location: { latLng: { latitude: +b.lat, longitude: +b.lng } } },
           travelMode,
+          ...(traffic ? { routingPreference: 'TRAFFIC_AWARE_OPTIMAL', departureTime } : {}),
         }),
       });
       const json = await res.json().catch(() => ({}));
       const r = json.routes?.[0];
       if (!res.ok || !r?.duration) { legs.push(null); continue; }
       leg = { mins: Math.max(1, Math.round(parseInt(r.duration, 10) / 60)), km: Math.round((r.distanceMeters || 0) / 100) / 10 };
-      await env.DB.put(key, JSON.stringify(leg), { expirationTtl: 30 * DAY });
+      await env.DB.put(key, JSON.stringify(leg), { expirationTtl: traffic ? 6 * 60 * 60 : 30 * DAY });
     }
     legs.push(leg);
   }
@@ -706,7 +709,7 @@ async function token(request, env) {
 /* ───────────────────────── Claude connector: MCP ───────────────────────── */
 
 const INSTRUCTIONS = `Plan A holds the user's plans: weekends away, trips, birthdays, wedding days and other events.
-A plan has days. Each day has items in time order. An item has either a start time (24-hour "HH:MM", with an optional end) or a part of the day (morning, afternoon or evening), plus an optional place, address, cost in dollars and note.
+A plan has days. Each day has items in time order. An item can have a category and either a start time (24-hour "HH:MM", with an optional end) or a part of the day (morning, afternoon or evening). Timed items may span dates and use IANA time zones, especially flights.
 A plan also has a checklist of tasks, fixed costs such as flights and hotels, and an optional budget.
 Call get_profile before suggesting anything, and follow the user's interests, pace, spending style and things to avoid.
 When you propose places, check them with your own search or maps tools first. Never invent a place, an address, opening hours or a price; leave a field out when you are not sure.
@@ -716,6 +719,11 @@ Show the user a draft in the chat and get their agreement before adding many ite
 const idArg = { type: 'string', description: 'The plan id from list_plans' };
 const itemFields = {
   title: { type: 'string' },
+  category: { type: 'string', enum: ['activity', 'flight', 'stay', 'food', 'transport', 'booking', 'other'] },
+  start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Start date. Defaults to the containing day.' },
+  end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'End date for an overnight or multi-day item.' },
+  start_zone: { type: 'string', description: 'IANA time zone such as America/Toronto' },
+  end_zone: { type: 'string', description: 'IANA time zone at the destination' },
   start: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$', description: 'Start time, 24-hour HH:MM. Leave out when using part.' },
   end: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$', description: 'End time, 24-hour HH:MM. Optional.' },
   part: { type: 'string', enum: ['morning', 'afternoon', 'evening'], description: 'Part of the day, for items with no set time' },
@@ -824,6 +832,11 @@ const validDate = d => /^\d{4}-\d{2}-\d{2}$/.test(String(d)) && !Number.isNaN(Da
 function itemFrom(a, base = {}) {
   const item = { ...base };
   if (a.title !== undefined) item.title = String(a.title).trim().slice(0, 140);
+  if (a.category !== undefined) item.category = ['activity', 'flight', 'stay', 'food', 'transport', 'booking', 'other'].includes(a.category) ? a.category : 'other';
+  if (a.start_date !== undefined) { if (!validDate(a.start_date)) throw new Error('Use a valid start_date.'); item.startDate = a.start_date; }
+  if (a.end_date !== undefined) { if (!validDate(a.end_date)) throw new Error('Use a valid end_date.'); item.endDate = a.end_date; }
+  if (a.start_zone !== undefined) item.startZone = String(a.start_zone).slice(0, 80) || undefined;
+  if (a.end_zone !== undefined) item.endZone = String(a.end_zone).slice(0, 80) || undefined;
   if (a.start !== undefined) {
     if (!validTime(a.start)) throw new Error(`"${a.start}" is not a time. Use 24-hour HH:MM, such as 19:30.`);
     item.start = a.start; delete item.part;
@@ -836,7 +849,7 @@ function itemFrom(a, base = {}) {
     if (!['morning', 'afternoon', 'evening'].includes(a.part)) throw new Error('part must be morning, afternoon or evening.');
     item.part = a.part; delete item.start; delete item.end;
   }
-  if (item.start && item.end && toMin(item.end) <= toMin(item.start)) throw new Error(`"${item.title}" ends before it starts.`);
+  if (item.start && item.end && (item.endDate || item.startDate) === item.startDate && toMin(item.end) <= toMin(item.start)) throw new Error(`"${item.title}" ends before it starts.`);
   if (!item.start) delete item.end;
   if (!item.start && !item.part) item.part = 'morning';
   if (a.place !== undefined) item.place = String(a.place).trim().slice(0, 80) || undefined;
@@ -850,7 +863,7 @@ function itemFrom(a, base = {}) {
 const describe = plan => ({
   id: plan.id, title: plan.title, kind: plan.kind, destination: plan.destination, detail: plan.detail, people: plan.people,
   budget: plan.budget ?? null, planned_total: totalOf(plan),
-  days: plan.days.map(d => ({ date: d.date, items: [...d.items].sort((a, b) => sortKey(a) - sortKey(b)).map(i => ({ id: i.id, title: i.title, ...(i.start ? { start: i.start } : { part: i.part }), ...(i.end ? { end: i.end } : {}), ...(i.place ? { place: i.place } : {}), ...(i.address ? { address: i.address } : {}), ...(i.cost ? { cost: i.cost } : {}), ...(i.note ? { note: i.note } : {}), status: i.status })) })),
+  days: plan.days.map(d => ({ date: d.date, items: [...d.items].sort((a, b) => sortKey(a) - sortKey(b)).map(i => ({ id: i.id, title: i.title, category: i.category || 'activity', ...(i.start ? { start: i.start, start_date: i.startDate || d.date } : { part: i.part }), ...(i.end ? { end: i.end, end_date: i.endDate || i.startDate || d.date } : {}), ...(i.startZone ? { start_zone: i.startZone } : {}), ...(i.endZone ? { end_zone: i.endZone } : {}), ...(i.place ? { place: i.place } : {}), ...(i.address ? { address: i.address } : {}), ...(i.cost ? { cost: i.cost } : {}), ...(i.note ? { note: i.note } : {}), status: i.status })) })),
   tasks: plan.tasks.map(t => ({ text: t.text, done: t.done })),
   fixed_costs: plan.costs.map(c => ({ label: c.label, amount: c.amount })),
 });
@@ -858,7 +871,7 @@ const describe = plan => ({
 async function runTool(name, a, env, user) {
   if (name === 'get_profile') {
     const p = user.profile || {};
-    return { name: user.name || p.name || '', home_city: p.home || '', interests: p.interests || [], pace: p.pace || 'balanced', spending: p.spend || 'mid', avoid: p.avoid || '' };
+    return { name: user.name || p.name || '', home_city: p.home || '', home_address: p.homeAddress || '', interests: p.interests || [], pace: p.pace || 'balanced', spending: p.spend || 'mid', avoid: p.avoid || '' };
   }
 
   if (name === 'list_plans') {
@@ -894,7 +907,7 @@ async function runTool(name, a, env, user) {
     for (const x of a.items) {
       const day = plan.days.find(d => d.date === x.date);
       if (!day) throw new Error(`${x.date} is not a day in this plan. Its days run from ${plan.days[0].date} to ${plan.days[plan.days.length - 1].date}.`);
-      const item = itemFrom(x, { id: randomId(8), status: 'todo' });
+      const item = itemFrom(x, { id: randomId(8), status: 'todo', startDate: x.start_date || x.date });
       day.items.push(item);
       added.push({ date: x.date, id: item.id, title: item.title });
     }

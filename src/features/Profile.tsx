@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useAtom, useAtomValue } from 'jotai';
 import { useState } from 'react';
 import { Back } from '@/components/icons';
+import { PlaceField } from '@/components/PlaceField';
 import { Button, Eyebrow, Field, IconButton, Page, ScreenHeading, Segmented } from '@/components/ui';
 import { api } from '@/lib/api';
 import { featuresAtom, go, plansAtom, profileAtom, sessionAtom, signIn, signOut, themeAtom } from '@/lib/store';
@@ -87,6 +88,7 @@ function About() {
       <section className="flex flex-col gap-4">
         <Field label="First name" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} autoComplete="given-name" />
         <Field label="Home city" value={profile.home} onChange={e => setProfile({ ...profile, home: e.target.value })} placeholder="Toronto" />
+        <PlaceField label="Home address (optional)" value={profile.homeAddress ?? ''} placeholder="Used for airport travel time" onText={homeAddress => setProfile({ ...profile, homeAddress, homeLat: undefined, homeLng: undefined })} onPick={p => setProfile({ ...profile, homeAddress: p.address ?? [p.name, p.detail].filter(Boolean).join(', '), homeLat: p.lat, homeLng: p.lng })} />
       </section>
 
       <section className="flex flex-col gap-3">

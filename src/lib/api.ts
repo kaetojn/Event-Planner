@@ -34,6 +34,6 @@ export const api = {
   autocomplete: (token: string, input: string, session: string, near?: { lat: number; lng: number }) => post<{ matches: PlaceMatch[] }>('/autocomplete', { input, session, near }, token),
   place: (token: string, id: string, session: string) => post<{ address: string; lat: number; lng: number }>('/place', { id, session }, token),
   places: (token: string, q: string, near: string) => post<{ places: FoundPlace[] }>('/places', { q, near }, token),
-  route: (token: string, points: { lat: number; lng: number }[], mode: Travel) => post<{ legs: ({ mins: number; km: number } | null)[] }>('/route', { points, mode }, token),
+  route: (token: string, points: { lat: number; lng: number }[], mode: Travel, departureTime?: string) => post<{ legs: ({ mins: number; km: number } | null)[] }>('/route', { points, mode, departureTime }, token),
   suggest: (token: string, body: { planId: string; date: string; from: string; to: string; wish?: string }) => post<{ suggestions: Suggestion[]; grounded: boolean }>('/suggest', body, token),
 };

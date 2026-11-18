@@ -5,6 +5,7 @@ export type Part = 'morning' | 'afternoon' | 'evening';
 export type Status = 'todo' | 'done' | 'skipped';
 export type Theme = 'system' | 'light' | 'dark';
 export type Travel = 'drive' | 'walk' | 'transit';
+export type ItemCategory = 'activity' | 'flight' | 'stay' | 'food' | 'transport' | 'booking' | 'other';
 
 /** Who can open a plan that is kept in an account. */
 export interface Access { role: 'owner' | 'editor'; owner: string; editors: string[]; view: string | null }
@@ -20,7 +21,14 @@ export interface Item {
   /** "HH:MM" in 24-hour time. An item has a start time or a part of the day, not both. */
   start?: string;
   end?: string;
+  /** Date ranges are optional for older items; the containing day remains the start date. */
+  startDate?: string;
+  endDate?: string;
+  /** IANA time zones, particularly important when departure and arrival differ. */
+  startZone?: string;
+  endZone?: string;
   part?: Part;
+  category?: ItemCategory;
   /** Where it happens: a name the person typed, or one chosen from a place search. */
   place?: string;
   /** Set when the place came from a search, so travel time can be worked out. */
@@ -30,6 +38,18 @@ export interface Item {
   note?: string;
   cost?: number;
   status: Status;
+  flight?: {
+    airline?: string;
+    number?: string;
+    from?: string;
+    fromAddress?: string;
+    fromLat?: number;
+    fromLng?: number;
+    to?: string;
+    toAddress?: string;
+    toLat?: number;
+    toLng?: number;
+  };
 }
 
 export interface Day { date: string; items: Item[] }
@@ -53,6 +73,8 @@ export interface Plan {
   costs: Cost[];
   /** How the group gets between stops. Drives travel times. */
   travel?: Travel;
+  /** Where the group is staying. It may intentionally be undecided. */
+  stay?: { name?: string; address?: string; lat?: number; lng?: number; tbd?: boolean };
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +82,9 @@ export interface Plan {
 export interface Profile {
   name: string;
   home: string;
+  homeAddress?: string;
+  homeLat?: number;
+  homeLng?: number;
   interests: string[];
   pace: 'slow' | 'balanced' | 'full';
   spend: 'save' | 'mid' | 'treat';
@@ -84,4 +109,14 @@ export const PARTS: { id: Part; label: string }[] = [
   { id: 'morning', label: 'Morning' },
   { id: 'afternoon', label: 'Afternoon' },
   { id: 'evening', label: 'Evening' },
+];
+
+export const ITEM_CATEGORIES: { id: ItemCategory; label: string }[] = [
+  { id: 'activity', label: 'Activity' },
+  { id: 'flight', label: 'Flight' },
+  { id: 'stay', label: 'Stay' },
+  { id: 'food', label: 'Food' },
+  { id: 'transport', label: 'Transport' },
+  { id: 'booking', label: 'Booking' },
+  { id: 'other', label: 'Other' },
 ];

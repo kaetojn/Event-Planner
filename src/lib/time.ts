@@ -63,3 +63,23 @@ export function dateRange(start: string, end: string) {
 }
 
 export const money = (n: number) => n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: n % 1 ? 2 : 0 });
+
+/** A date/time pair without silently applying the device's time zone. */
+export const localStamp = (date: string, time: string) => `${date.replaceAll('-', '')}T${time.replace(':', '')}00`;
+
+export function addMinutes(date: string, time: string, mins: number) {
+  const [y, mo, day] = date.split('-').map(Number), [h, m] = time.split(':').map(Number);
+  const d = new Date(Date.UTC(y, mo - 1, day, h, m + mins));
+  return { date: d.toISOString().slice(0, 10), time: d.toISOString().slice(11, 16) };
+}
+
+/** Converts a wall-clock time in an IANA zone to the instant expected by server APIs. */
+export function zonedIso(date: string, time: string, zone: string) {
+  const [y, mo, day] = date.split('-').map(Number), [h, m] = time.split(':').map(Number);
+  const guess = Date.UTC(y, mo - 1, day, h, m);
+  try {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(guess)).map(p => [p.type, p.value]));
+    const shown = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+    return new Date(guess - (shown - guess)).toISOString();
+  } catch { return new Date(guess).toISOString(); }
+}

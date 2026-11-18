@@ -2,12 +2,13 @@ import { atom, getDefaultStore } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from './api';
+import { daysBetween } from './time';
 import type { Access, Features, Item, Plan, Profile, Session, Theme } from './types';
 
 // Everything is kept on the device first, so the app opens instantly and works offline.
 // With an account, plans are also saved to the server and shared between devices and people.
 const keep = { getOnInit: true };
-const blank: Profile = { name: '', home: '', interests: [], pace: 'balanced', spend: 'mid', avoid: '' };
+const blank: Profile = { name: '', home: '', homeAddress: '', interests: [], pace: 'balanced', spend: 'mid', avoid: '' };
 export const plansAtom = atomWithStorage<Plan[]>('plan-a:plans', [], undefined, keep);
 export const profileAtom = atomWithStorage<Profile>('plan-a:profile', blank, undefined, keep);
 export const themeAtom = atomWithStorage<Theme>('plan-a:theme', 'system', undefined, keep);
@@ -17,6 +18,7 @@ export const featuresAtom = atomWithStorage<Features>('plan-a:features', { ai: f
 /** For each plan saved to the account, the version the server has. A plan that differs still needs saving. */
 const savedAtom = atomWithStorage<Record<string, string>>('plan-a:saved', {}, undefined, keep);
 export const syncAtom = atom<'idle' | 'saving' | 'offline'>('idle');
+export const lastSyncAtom = atom<string | null>(null);
 
 const store = getDefaultStore();
 const token = () => store.get(sessionAtom)?.token;
@@ -44,13 +46,31 @@ const inDay = (plan: Plan, date: string, change: (items: Item[]) => Item[]): Pla
 });
 
 export const saveItem = (planId: string, date: string, item: Item) =>
-  updatePlan(planId, p => inDay(p, date, items => (items.some(i => i.id === item.id) ? items.map(i => (i.id === item.id ? item : i)) : [...items, item])));
+  updatePlan(planId, p => {
+    const target = item.startDate ?? date;
+    const cleared = p.days.map(d => ({ ...d, items: d.items.filter(i => i.id !== item.id) }));
+    return { ...p, days: cleared.map(d => (d.date === target ? { ...d, items: [...d.items, { ...item, startDate: target }] } : d)) };
+  });
 
 export const patchItem = (planId: string, date: string, itemId: string, patch: Partial<Item>) =>
   updatePlan(planId, p => inDay(p, date, items => items.map(i => (i.id === itemId ? { ...i, ...patch } : i))));
 
 export const removeItem = (planId: string, date: string, itemId: string) =>
   updatePlan(planId, p => inDay(p, date, items => items.filter(i => i.id !== itemId)));
+
+/** Changes a plan's range without losing items. Items outside the new range move to the nearest edge day. */
+export function resizePlan(id: string, start: string, end: string) {
+  updatePlan(id, p => {
+    const fresh = daysBetween(start, end);
+    const byDate = new Map(fresh.map(d => [d.date, d]));
+    for (const old of p.days) for (const item of old.items) {
+      const wanted = item.startDate ?? old.date;
+      const target = wanted < start ? start : wanted > end ? end : wanted;
+      byDate.get(target)!.items.push({ ...item, startDate: target, ...(item.endDate && item.endDate < target ? { endDate: target } : item.endDate && item.endDate > end ? { endDate: end } : {}) });
+    }
+    return { ...p, days: fresh };
+  });
+}
 
 export const setAccess = (id: string, access: Access) => store.set(accessAtom, a => ({ ...a, [id]: access }));
 
@@ -82,6 +102,7 @@ export async function push(): Promise<void> {
       }
     }
     store.set(syncAtom, 'idle');
+    store.set(lastSyncAtom, new Date().toISOString());
   } catch (e) {
     if (e instanceof ApiError && e.status === 403) return void pull();
     store.set(syncAtom, signedOut(e) ? 'idle' : 'offline');
@@ -120,9 +141,15 @@ export async function pull(): Promise<void> {
     else if (!me.profile && !untouched) pushProfile();
     else if (me.profile) profileSaved = JSON.stringify(me.profile);
     void push();
+    store.set(lastSyncAtom, new Date().toISOString());
   } catch (e) {
     if (!signedOut(e)) store.set(syncAtom, 'offline');
   }
+}
+
+export async function refreshPlans() {
+  await push();
+  await pull();
 }
 
 let profileSaved = '';

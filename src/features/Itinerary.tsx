@@ -1,7 +1,7 @@
 import { clock, dateRange, longDay, money, ordered } from '@/lib/time';
 import { KINDS, PARTS, type Item, type Plan } from '@/lib/types';
 
-export const when = (i: Item) => (i.start ? `${clock(i.start)}${i.end ? ` to ${clock(i.end)}` : ''}` : PARTS.find(p => p.id === i.part)?.label ?? '');
+export const when = (i: Item) => (i.start ? `${clock(i.start)}${i.startZone ? ` ${i.startZone.split('/').pop()!.replaceAll('_', ' ')}` : ''}${i.end ? ` to ${i.endDate && i.startDate && i.endDate !== i.startDate ? `${i.endDate} ` : ''}${clock(i.end)}${i.endZone ? ` ${i.endZone.split('/').pop()!.replaceAll('_', ' ')}` : ''}` : ''}` : PARTS.find(p => p.id === i.part)?.label ?? '');
 export const planTotal = (plan: Plan) => plan.costs.reduce((t, c) => t + c.amount, 0) + plan.days.reduce((t, d) => t + d.items.reduce((s, i) => s + (i.status === 'skipped' ? 0 : i.cost ?? 0), 0), 0);
 
 /** The plan as plain text, laid out like a note, for pasting into a message. */
@@ -35,8 +35,8 @@ export function Itinerary({ plan, note }: { plan: Plan; note?: string }) {
               <div className="grid grid-cols-[92px_1fr] gap-y-2.5 text-[15px] leading-snug print:grid-cols-[150px_1fr]">
                 {items.map(i => (
                   <div key={i.id} className="contents">
-                    <span className={i.start ? 'num pt-px text-[13px] font-semibold' : 'pt-px text-[13px] text-muted'}>{i.start ? clock(i.start) : when(i)}{i.end && <span className="block font-normal text-muted">{clock(i.end)}</span>}</span>
-                    <span>{i.title}{i.place && <span className="text-muted">, {i.place}</span>}</span>
+                    <span className={i.start ? 'num pt-px text-[13px] font-semibold' : 'pt-px text-[13px] text-muted'}>{i.start ? clock(i.start) : when(i)}{i.end && <span className="block font-normal text-muted">{i.endDate && i.endDate !== d.date ? `${i.endDate} · ` : ''}{clock(i.end)}</span>}</span>
+                    <span>{i.title}{i.flight?.from && i.flight?.to ? <span className="text-muted">, {i.flight.from} to {i.flight.to}</span> : i.place && <span className="text-muted">, {i.place}</span>}</span>
                   </div>
                 ))}
               </div>

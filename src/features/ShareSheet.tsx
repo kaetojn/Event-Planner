@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Cross } from '@/components/icons';
 import { Button, Eyebrow, IconButton, Sheet } from '@/components/ui';
 import { api } from '@/lib/api';
+import { downloadPlanCalendar } from '@/lib/calendar';
 import { saveImage } from '@/lib/image';
 import { accessAtom, go, push, removePlan, sessionAtom, setAccess } from '@/lib/store';
 import type { Plan } from '@/lib/types';
@@ -89,10 +90,11 @@ export function ShareSheet({ plan, onClose }: { plan: Plan; onClose: () => void 
 
       <section className="flex flex-col gap-3 border-t border-line pt-4">
         <Eyebrow>Send a copy</Eyebrow>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => copy('text', asText(plan))}>{copied === 'text' ? 'Copied' : 'As text'}</Button>
           <Button onClick={() => { onClose(); setTimeout(() => print(), 350); }}>As PDF</Button>
           <Button onClick={() => void saveImage(plan)}>As image</Button>
+          <Button onClick={() => downloadPlanCalendar(plan)}>To calendar</Button>
         </div>
       </section>
 

@@ -10,6 +10,7 @@ import { Budget } from './Budget';
 import { Checklist } from './Checklist';
 import { Itinerary } from './Itinerary';
 import { MapMode } from './MapMode';
+import { PlanSettingsSheet } from './PlanSettingsSheet';
 import { ShareSheet } from './ShareSheet';
 import { ItemSheet, Timeline } from './Timeline';
 
@@ -24,6 +25,7 @@ export function PlanView({ id }: { id: string }) {
   const [date, setDate] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [settings, setSettings] = useState(false);
 
   if (!plan) {
     return (
@@ -46,6 +48,7 @@ export function PlanView({ id }: { id: string }) {
           <div className="flex items-center justify-between">
             <IconButton label="Back to your plans" onClick={() => go('/')} className="-ml-3"><Back /></IconButton>
             <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setSettings(true)}>Edit</Button>
               <Button onClick={() => setSharing(true)}>Share</Button>
               <IconButton label={`Add to ${longDay(day.date)}`} onClick={() => { setMode('timeline'); setAdding(true); }} className="bg-accent text-on-accent"><Plus width={20} height={20} /></IconButton>
             </div>
@@ -82,6 +85,7 @@ export function PlanView({ id }: { id: string }) {
 
       {adding && <ItemSheet plan={plan} day={day} onClose={() => setAdding(false)} />}
       {sharing && <ShareSheet plan={plan} onClose={() => setSharing(false)} />}
+      {settings && <PlanSettingsSheet plan={plan} onClose={() => setSettings(false)} />}
       <PrintView plan={plan} />
     </>
   );
