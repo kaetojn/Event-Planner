@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T13:42:28Z",
+  "title": "Design System: Plan A",
+  "extensions": {
+    "colorMeta": {
+      "limestone-ground": { "role": "neutral", "displayName": "Limestone Ground", "canonical": "#eae9e8", "tonalRamp": ["oklch(15% 0.003 85)", "oklch(27% 0.003 85)", "oklch(39% 0.003 85)", "oklch(51% 0.003 85)", "oklch(63% 0.003 85)", "oklch(75% 0.003 85)", "oklch(87% 0.003 85)", "oklch(95% 0.003 85)"] },
+      "limestone-surface": { "role": "neutral", "displayName": "Limestone Surface", "canonical": "#f4f2ef", "tonalRamp": ["oklch(15% 0.007 75)", "oklch(27% 0.007 75)", "oklch(39% 0.007 75)", "oklch(51% 0.007 75)", "oklch(63% 0.007 75)", "oklch(75% 0.007 75)", "oklch(87% 0.007 75)", "oklch(95% 0.007 75)"] },
+      "graphite-ink": { "role": "neutral", "displayName": "Graphite Ink", "canonical": "#0b0b0b", "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"] },
+      "zinc-muted": { "role": "neutral", "displayName": "Zinc Muted", "canonical": "#5c5c59", "tonalRamp": ["oklch(15% 0.004 100)", "oklch(27% 0.004 100)", "oklch(39% 0.004 100)", "oklch(51% 0.004 100)", "oklch(63% 0.004 100)", "oklch(75% 0.004 100)", "oklch(87% 0.004 100)", "oklch(95% 0.004 100)"] },
+      "zinc-line": { "role": "neutral", "displayName": "Zinc Line", "canonical": "#aaa9a4", "tonalRamp": ["oklch(15% 0.006 90)", "oklch(27% 0.006 90)", "oklch(39% 0.006 90)", "oklch(51% 0.006 90)", "oklch(63% 0.006 90)", "oklch(75% 0.006 90)", "oklch(87% 0.006 90)", "oklch(95% 0.006 90)"] },
+      "zinc-edge": { "role": "neutral", "displayName": "Zinc Edge", "canonical": "#8f8f8a", "tonalRamp": ["oklch(15% 0.006 95)", "oklch(27% 0.006 95)", "oklch(39% 0.006 95)", "oklch(51% 0.006 95)", "oklch(63% 0.006 95)", "oklch(75% 0.006 95)", "oklch(87% 0.006 95)", "oklch(95% 0.006 95)"] },
+      "zinc-ring": { "role": "neutral", "displayName": "Zinc Ring", "canonical": "#696a66", "tonalRamp": ["oklch(15% 0.007 110)", "oklch(27% 0.007 110)", "oklch(39% 0.007 110)", "oklch(51% 0.007 110)", "oklch(63% 0.007 110)", "oklch(75% 0.007 110)", "oklch(87% 0.007 110)", "oklch(95% 0.007 110)"] },
+      "aged-brass": { "role": "primary", "displayName": "Aged Brass", "canonical": "#887748", "tonalRamp": ["oklch(15% 0.045 85)", "oklch(27% 0.055 85)", "oklch(39% 0.065 85)", "oklch(51% 0.075 85)", "oklch(63% 0.075 85)", "oklch(75% 0.065 85)", "oklch(87% 0.045 85)", "oklch(95% 0.025 85)"] },
+      "brass-tint": { "role": "primary", "displayName": "Brass Tint", "canonical": "#ded9cb", "tonalRamp": ["oklch(15% 0.018 80)", "oklch(27% 0.023 80)", "oklch(39% 0.028 80)", "oklch(51% 0.033 80)", "oklch(63% 0.033 80)", "oklch(75% 0.028 80)", "oklch(87% 0.023 80)", "oklch(95% 0.018 80)"] },
+      "on-brass": { "role": "neutral", "displayName": "On Brass", "canonical": "#ffffff", "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(100% 0 0)"] },
+      "limestone-wash": { "role": "neutral", "displayName": "Limestone Wash", "canonical": "#e2e0dc", "tonalRamp": ["oklch(15% 0.007 80)", "oklch(27% 0.007 80)", "oklch(39% 0.007 80)", "oklch(51% 0.007 80)", "oklch(63% 0.007 80)", "oklch(75% 0.007 80)", "oklch(87% 0.007 80)", "oklch(95% 0.007 80)"] },
+      "oxide-error": { "role": "secondary", "displayName": "Oxide Error", "canonical": "#9a3f32", "tonalRamp": ["oklch(15% 0.065 30)", "oklch(27% 0.085 30)", "oklch(39% 0.105 30)", "oklch(51% 0.125 30)", "oklch(63% 0.115 30)", "oklch(75% 0.095 30)", "oklch(87% 0.065 30)", "oklch(95% 0.035 30)"] },
+      "night-ground": { "role": "neutral", "displayName": "Night Ground", "canonical": "#151614", "tonalRamp": ["oklch(15% 0.005 120)", "oklch(27% 0.005 120)", "oklch(39% 0.005 120)", "oklch(51% 0.005 120)", "oklch(63% 0.005 120)", "oklch(75% 0.005 120)", "oklch(87% 0.005 120)", "oklch(95% 0.005 120)"] },
+      "night-surface": { "role": "neutral", "displayName": "Night Surface", "canonical": "#1c1d1a", "tonalRamp": ["oklch(15% 0.007 115)", "oklch(27% 0.007 115)", "oklch(39% 0.007 115)", "oklch(51% 0.007 115)", "oklch(63% 0.007 115)", "oklch(75% 0.007 115)", "oklch(87% 0.007 115)", "oklch(95% 0.007 115)"] },
+      "chalk-ink": { "role": "neutral", "displayName": "Chalk Ink", "canonical": "#eceae4", "tonalRamp": ["oklch(15% 0.01 80)", "oklch(27% 0.01 80)", "oklch(39% 0.01 80)", "oklch(51% 0.01 80)", "oklch(63% 0.01 80)", "oklch(75% 0.01 80)", "oklch(87% 0.01 80)", "oklch(95% 0.01 80)"] },
+      "night-muted": { "role": "neutral", "displayName": "Night Muted", "canonical": "#aaa9a2", "tonalRamp": ["oklch(15% 0.009 90)", "oklch(27% 0.009 90)", "oklch(39% 0.009 90)", "oklch(51% 0.009 90)", "oklch(63% 0.009 90)", "oklch(75% 0.009 90)", "oklch(87% 0.009 90)", "oklch(95% 0.009 90)"] },
+      "night-line": { "role": "neutral", "displayName": "Night Line", "canonical": "#454640", "tonalRamp": ["oklch(15% 0.01 110)", "oklch(27% 0.01 110)", "oklch(39% 0.01 110)", "oklch(51% 0.01 110)", "oklch(63% 0.01 110)", "oklch(75% 0.01 110)", "oklch(87% 0.01 110)", "oklch(95% 0.01 110)"] },
+      "night-edge": { "role": "neutral", "displayName": "Night Edge", "canonical": "#64645d", "tonalRamp": ["oklch(15% 0.011 95)", "oklch(27% 0.011 95)", "oklch(39% 0.011 95)", "oklch(51% 0.011 95)", "oklch(63% 0.011 95)", "oklch(75% 0.011 95)", "oklch(87% 0.011 95)", "oklch(95% 0.011 95)"] },
+      "night-ring": { "role": "neutral", "displayName": "Night Ring", "canonical": "#8b8b83", "tonalRamp": ["oklch(15% 0.012 95)", "oklch(27% 0.012 95)", "oklch(39% 0.012 95)", "oklch(51% 0.012 95)", "oklch(63% 0.012 95)", "oklch(75% 0.012 95)", "oklch(87% 0.012 95)", "oklch(95% 0.012 95)"] },
+      "night-brass": { "role": "primary", "displayName": "Night Brass", "canonical": "#b39b60", "tonalRamp": ["oklch(15% 0.045 85)", "oklch(27% 0.055 85)", "oklch(39% 0.065 85)", "oklch(51% 0.075 85)", "oklch(63% 0.08 85)", "oklch(75% 0.07 85)", "oklch(87% 0.05 85)", "oklch(95% 0.025 85)"] },
+      "night-brass-label": { "role": "primary", "displayName": "Night Brass Label", "canonical": "#c1a76a", "tonalRamp": ["oklch(15% 0.045 85)", "oklch(27% 0.055 85)", "oklch(39% 0.065 85)", "oklch(51% 0.075 85)", "oklch(63% 0.08 85)", "oklch(75% 0.07 85)", "oklch(87% 0.05 85)", "oklch(95% 0.025 85)"] },
+      "night-tint": { "role": "primary", "displayName": "Night Brass Tint", "canonical": "#2d2b23", "tonalRamp": ["oklch(15% 0.018 80)", "oklch(27% 0.023 80)", "oklch(39% 0.028 80)", "oklch(51% 0.033 80)", "oklch(63% 0.033 80)", "oklch(75% 0.028 80)", "oklch(87% 0.023 80)", "oklch(95% 0.018 80)"] },
+      "on-night-brass": { "role": "neutral", "displayName": "On Night Brass", "canonical": "#11120f", "tonalRamp": ["oklch(15% 0.006 115)", "oklch(27% 0.006 115)", "oklch(39% 0.006 115)", "oklch(51% 0.006 115)", "oklch(63% 0.006 115)", "oklch(75% 0.006 115)", "oklch(87% 0.006 115)", "oklch(95% 0.006 115)"] },
+      "night-wash": { "role": "neutral", "displayName": "Night Wash", "canonical": "#20211e", "tonalRamp": ["oklch(15% 0.007 110)", "oklch(27% 0.007 110)", "oklch(39% 0.007 110)", "oklch(51% 0.007 110)", "oklch(63% 0.007 110)", "oklch(75% 0.007 110)", "oklch(87% 0.007 110)", "oklch(95% 0.007 110)"] },
+      "night-error": { "role": "secondary", "displayName": "Night Oxide Error", "canonical": "#ef8a7b", "tonalRamp": ["oklch(15% 0.065 30)", "oklch(27% 0.085 30)", "oklch(39% 0.105 30)", "oklch(51% 0.125 30)", "oklch(63% 0.115 30)", "oklch(75% 0.095 30)", "oklch(87% 0.065 30)", "oklch(95% 0.035 30)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Architectural Display", "purpose": "Screen and plan titles." },
+      "headline": { "displayName": "Editorial Headline", "purpose": "Summary titles and modal headings." },
+      "title": { "displayName": "Schedule Title", "purpose": "Activity titles and airport-code-adjacent hierarchy." },
+      "body": { "displayName": "Operational Body", "purpose": "Instructions, forms, and readable detail." },
+      "label": { "displayName": "Architectural Notation", "purpose": "Categories, indexes, and compact uppercase metadata." }
+    },
+    "shadows": [
+      { "name": "floating-containment-light", "value": "0 18px 42px rgb(11 11 11 / 0.18)", "purpose": "Bottom sheets, centred dialogs, and floating result menus only." },
+      { "name": "floating-containment-dark", "value": "0 18px 42px rgb(0 0 0 / 0.38)", "purpose": "Dark-theme modal containment only." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrances and sheet motion." },
+      { "name": "rise", "value": "420ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Schedule and page sections rise 10px with a short blur." },
+      { "name": "fade", "value": "180ms ease-out", "purpose": "Backdrop and floating-layer appearance." },
+      { "name": "sheet", "value": "280ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Sheets enter from 24px below." },
+      { "name": "pop", "value": "280ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Completion checks scale into place." },
+      { "name": "reduced-motion", "value": "none", "purpose": "Disable all animation and transition under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "content-max", "value": "620px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single main action in a context.",
+      "html": "<button class=\"ds-btn-primary\">Add to plan</button>",
+      "css": ".ds-btn-primary{height:44px;padding:0 16px;border:0;border-radius:4px;background:var(--accent,#887748);color:var(--on-accent,#fff);font:700 14px/1 Lato,system-ui,sans-serif;letter-spacing:.02em;transition:filter .2s,transform .2s}.ds-btn-primary:hover{filter:brightness(.95);transform:translateY(-1px)}.ds-btn-primary:active{transform:scale(.98)}.ds-btn-primary:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A bounded supporting action with no elevation.",
+      "html": "<button class=\"ds-btn-secondary\">Edit details</button>",
+      "css": ".ds-btn-secondary{height:44px;padding:0 16px;border:1px solid var(--edge,#8f8f8a);border-radius:4px;background:var(--surface,#f4f2ef);color:var(--ink,#0b0b0b);font:700 14px/1 Lato,system-ui,sans-serif;letter-spacing:.02em;transition:border-color .2s,transform .2s}.ds-btn-secondary:hover{border-color:var(--ink,#0b0b0b);transform:translateY(-1px)}.ds-btn-secondary:active{transform:scale(.98)}.ds-btn-secondary:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A labelled 48px operational field.",
+      "html": "<label class=\"ds-field\"><span>What</span><input value=\"Dinner reservation\"></label>",
+      "css": ".ds-field{display:grid;gap:6px;color:var(--ink,#0b0b0b);font:700 14px/1.2 Lato,system-ui,sans-serif}.ds-field input{height:48px;padding:0 12px;border:1px solid var(--edge,#8f8f8a);border-radius:4px;background:var(--surface,#f4f2ef);color:var(--ink,#0b0b0b);font:400 16px/1 Lato,system-ui,sans-serif}.ds-field input:hover{border-color:var(--ink,#0b0b0b)}.ds-field input:focus-visible{border-color:var(--accent,#887748);outline:2px solid color-mix(in srgb,var(--accent,#887748) 20%,transparent);outline-offset:0}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "description": "A ruled choice group with a graphite inverse selection.",
+      "html": "<div class=\"ds-segmented\" role=\"group\" aria-label=\"When\"><button aria-pressed=\"true\">At a set time</button><button aria-pressed=\"false\">Part of the day</button></div>",
+      "css": ".ds-segmented{display:grid;grid-template-columns:1fr 1fr;padding:4px;border:1px solid var(--line,#aaa9a4);border-radius:4px;background:var(--surface,#f4f2ef)}.ds-segmented button{height:44px;border:0;border-right:1px solid var(--line,#aaa9a4);border-radius:2px;background:transparent;color:var(--muted,#5c5c59);font:700 13px/1 Lato,system-ui,sans-serif}.ds-segmented button:last-child{border-right:0}.ds-segmented button[aria-pressed=true]{background:var(--ink,#0b0b0b);color:var(--ground,#eae9e8)}.ds-segmented button:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:1px}"
+    },
+    {
+      "name": "Date Index",
+      "kind": "nav",
+      "description": "A horizontally scrollable measured date strip.",
+      "html": "<nav class=\"ds-date-index\" aria-label=\"Days\"><button aria-current=\"date\">Fri 12</button><button>Sat 13</button><button>Sun 14</button></nav>",
+      "css": ".ds-date-index{display:flex;overflow:auto;border-bottom:1px solid var(--ink,#0b0b0b)}.ds-date-index button{min-width:72px;height:48px;padding:0 12px;border:0;border-left:1px solid var(--line,#aaa9a4);background:transparent;color:var(--muted,#5c5c59);font:700 15px/1 Lato,system-ui,sans-serif}.ds-date-index button:last-child{border-right:1px solid var(--line,#aaa9a4)}.ds-date-index button:hover{background:var(--wash,#e2e0dc)}.ds-date-index button[aria-current=date]{background:var(--accent,#887748);color:var(--on-accent,#fff)}.ds-date-index button:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:-3px}"
+    },
+    {
+      "name": "Mode Navigation",
+      "kind": "nav",
+      "refersTo": "mode-active",
+      "description": "The rectilinear four-mode anchor at the bottom of a plan.",
+      "html": "<nav class=\"ds-mode-nav\" aria-label=\"Modes\"><button aria-current=\"page\">Timeline</button><button>Checklist</button><button>Budget</button><button>Map</button></nav>",
+      "css": ".ds-mode-nav{display:grid;grid-template-columns:repeat(4,1fr);border-block:1px solid var(--ink,#0b0b0b);background:var(--ground,#eae9e8)}.ds-mode-nav button{height:48px;border:0;border-right:1px solid var(--line,#aaa9a4);background:transparent;color:var(--muted,#5c5c59);font:700 11px/1 Lato,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase}.ds-mode-nav button:last-child{border-right:0}.ds-mode-nav button:hover{background:var(--wash,#e2e0dc);color:var(--ink,#0b0b0b)}.ds-mode-nav button[aria-current=page]{background:var(--accent,#887748);color:var(--on-accent,#fff)}.ds-mode-nav button:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:-3px}"
+    },
+    {
+      "name": "Schedule Row",
+      "kind": "custom",
+      "description": "The unboxed ordinary activity row aligned to the time rail.",
+      "html": "<div class=\"ds-schedule-row\"><time>7:30 PM</time><div><small>DINING</small><strong>Market dinner</strong><span>Old Town · $62</span></div><button aria-label=\"Mark Market dinner as done\"><i></i></button></div>",
+      "css": ".ds-schedule-row{display:grid;grid-template-columns:64px 1fr 44px;align-items:start;padding:16px 0;border-top:1px solid var(--line,#aaa9a4);color:var(--ink,#0b0b0b)}.ds-schedule-row time{padding-top:4px;font:700 13px/1.2 Lato,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-schedule-row div{display:grid;gap:3px;padding:4px 8px}.ds-schedule-row small{color:var(--muted,#5c5c59);font:700 9px/1 Lato,system-ui,sans-serif;letter-spacing:.18em}.ds-schedule-row strong{font:700 24px/1.05 Finlandica,Arial Narrow,sans-serif;letter-spacing:-.015em}.ds-schedule-row span{color:var(--muted,#5c5c59);font:400 13px/1.3 Lato,system-ui,sans-serif}.ds-schedule-row button{display:grid;place-items:center;width:44px;height:44px;border:0;background:transparent}.ds-schedule-row i{width:24px;height:24px;border:1px solid var(--ring,#696a66);border-radius:2px}.ds-schedule-row button:hover{background:var(--wash,#e2e0dc)}.ds-schedule-row button:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:0}"
+    },
+    {
+      "name": "Flight Ticket",
+      "kind": "custom",
+      "description": "The flight-only boarding-pass exception with factual route and timing data.",
+      "html": "<article class=\"ds-flight-ticket\"><b></b><header>FLIGHT · AC 872 <span>AIR CANADA</span></header><section><strong>YYZ<small>Toronto Pearson</small></strong><i>→</i><strong>CDG<small>Paris Charles de Gaulle</small></strong></section><footer><span>DEPARTS<strong>8:45 PM</strong></span><span>ARRIVES<strong>10:10 AM</strong></span><span>DURATION<strong>7 h 25</strong></span></footer></article>",
+      "css": ".ds-flight-ticket{position:relative;overflow:hidden;border:1px solid var(--edge,#8f8f8a);background:var(--surface,#f4f2ef);color:var(--ink,#0b0b0b);font-family:Lato,system-ui,sans-serif}.ds-flight-ticket>b{position:absolute;inset:0 auto 0 0;width:36px;background:var(--accent,#887748)}.ds-flight-ticket header{position:relative;display:flex;justify-content:space-between;padding:12px 16px 8px 48px;color:var(--muted,#5c5c59);font-size:10px;font-weight:700;letter-spacing:.2em}.ds-flight-ticket header span{font-size:9px;letter-spacing:.12em}.ds-flight-ticket section{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:12px 16px 12px 48px;border-block:1px solid var(--line,#aaa9a4)}.ds-flight-ticket section>strong{font:700 38px/1 Finlandica,Arial Narrow,sans-serif;letter-spacing:-.03em}.ds-flight-ticket section small{display:block;margin-top:4px;color:var(--muted,#5c5c59);font:400 10px/1.2 Lato,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase}.ds-flight-ticket section i{color:var(--muted,#5c5c59);font-style:normal;font-size:24px}.ds-flight-ticket footer{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 12px 48px;border-top:1px dashed var(--edge,#8f8f8a);color:var(--muted,#5c5c59);font-size:10px;letter-spacing:.14em}.ds-flight-ticket footer strong{display:block;margin-top:4px;color:var(--ink,#0b0b0b);font-size:13px;letter-spacing:0;font-variant-numeric:tabular-nums}.ds-flight-ticket:focus-within{outline:2px solid var(--accent,#887748);outline-offset:2px}"
+    },
+    {
+      "name": "Sheet",
+      "kind": "custom",
+      "description": "A bottom sheet on phones and centred operational dialog on wider screens.",
+      "html": "<section class=\"ds-sheet\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Add to plan\"><header><h2>Add to plan</h2><button aria-label=\"Close\">×</button></header><div>Form content</div><footer><button>Cancel</button><button>Save</button></footer></section>",
+      "css": ".ds-sheet{display:flex;max-height:92vh;max-width:576px;flex-direction:column;border:1px solid var(--line,#aaa9a4);border-radius:12px 12px 0 0;background:var(--ground,#eae9e8);color:var(--ink,#0b0b0b);box-shadow:0 18px 42px rgb(11 11 11/.18);font-family:Lato,system-ui,sans-serif}.ds-sheet header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 8px}.ds-sheet h2{margin:0;font:600 28px/1 Finlandica,Arial Narrow,sans-serif}.ds-sheet header button{width:44px;height:44px;border:0;border-radius:3px;background:transparent;color:var(--muted,#5c5c59);font-size:24px}.ds-sheet>div{padding:12px 24px 20px}.ds-sheet footer{display:flex;gap:8px;padding:12px 24px 16px;border-top:1px solid var(--line,#aaa9a4)}.ds-sheet footer button{height:44px;padding:0 16px;border:1px solid var(--edge,#8f8f8a);border-radius:4px;background:var(--surface,#f4f2ef);color:var(--ink,#0b0b0b);font-weight:700}.ds-sheet footer button:last-child{border-color:var(--accent,#887748);background:var(--accent,#887748);color:var(--on-accent,#fff)}.ds-sheet button:focus-visible{outline:2px solid var(--accent,#887748);outline-offset:2px}@media(min-width:768px){.ds-sheet{border-radius:8px}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Architect's Schedule",
+    "overview": "Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. Its defining move is a continuous itinerary grid whose precision makes complex days feel composed: a compact trip header, a measured date index, a fixed time rail, and calm chronological rows that preserve the shape of the day.\n\nThe visual world is limestone, graphite, zinc, and aged brass. Finlandica supplies condensed editorial authority; Lato handles instructions and dense operational detail. Space, rules, and alignment create hierarchy. Flights alone may expand into boarding-pass modules because that topology improves travel scanning; nothing else borrows airport costume.",
+    "keyCharacteristics": [
+      "Continuous ruled schedules instead of floating activity cards.",
+      "Rectilinear 0–6px geometry for ordinary interface elements.",
+      "Finlandica headlines and titles paired with compact Lato notation.",
+      "Aged brass reserved for selection, completion, primary action, and flight indexing.",
+      "Light and dark themes that preserve identical hierarchy and interaction semantics.",
+      "Information-dense flight tickets inside an otherwise unboxed itinerary."
+    ],
+    "rules": [
+      { "name": "The Scarce Brass Rule", "body": "Brass communicates action, selection, completion, or flight indexing. Do not spend it on decoration or ordinary body copy.", "section": "colors" },
+      { "name": "The Semantic Parity Rule", "body": "Dark mode changes values, never roles: every light token has the same purpose and hierarchy at night.", "section": "colors" },
+      { "name": "The Two-Face Rule", "body": "Finlandica names and summarizes; Lato explains and operates. Do not set long instructions or dense form copy in Finlandica.", "section": "typography" },
+      { "name": "The Continuous Grid Rule", "body": "New itinerary content must align to the existing time rail and rules; do not introduce a floating card merely to group ordinary activity data.", "section": "layout" },
+      { "name": "The Rules-Before-Shadows Rule", "body": "If a border, tonal change, or spacing break can express the hierarchy, use it. Shadows mean that a surface is temporarily above the page.", "section": "elevation" },
+      { "name": "The Rectilinear Default Rule", "body": "Every new control or container starts at 0–4px and may reach 6px only when its scale needs it.", "section": "shapes" },
+      { "name": "The Ticket Exception Rule", "body": "Perforations, cut-outs, airport-code typography, and indexed colour strips belong only to flight entries.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do preserve the continuous time rail and chronological rules when adding itinerary data.",
+      "Do use Finlandica for titles, airport codes, and summary numbers while keeping operational copy in Lato.",
+      "Do keep brass scarce and semantic: action, selection, completion, focus, and flight indexing.",
+      "Do maintain role-for-role parity across light and dark themes.",
+      "Do expose local departure and arrival context for flights without losing the larger day.",
+      "Do retain 44px minimum targets, visible keyboard focus, semantic pressed/current states, modal focus handling, and reduced-motion support."
+    ],
+    "donts": [
+      "Don't turn ordinary activities, gaps, or form groups into soft lifestyle cards.",
+      "Don't use pill geometry for containers or controls; Tailwind radius aliases must continue to resolve to the architectural 4–6px scale.",
+      "Don't apply boarding-pass styling, perforations, airport codes, or ticket cut-outs to anything except a flight.",
+      "Don't invent live flight facts such as gates, terminals, delays, or status.",
+      "Don't add shadows to resting content or introduce decorative gradients, photography, or illustration.",
+      "Don't let a desktop viewport turn the plan into a multi-panel dashboard; one mode remains the one job on screen."
+    ]
+  }
+}

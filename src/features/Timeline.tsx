@@ -1,14 +1,14 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
-import { CategoryIcon } from '@/components/icons';
+import { Arrow, CategoryIcon } from '@/components/icons';
 import { PlaceField } from '@/components/PlaceField';
 import { Button, Check, Eyebrow, Field, Segmented, SelectField, Sheet, useSwipe } from '@/components/ui';
 import { TRAVEL_WORD, useLegs } from '@/lib/legs';
 import { api } from '@/lib/api';
 import { downloadItemCalendar, googleCalendarUrl } from '@/lib/calendar';
 import { featuresAtom, patchItem, profileAtom, removeItem, saveItem, sessionAtom } from '@/lib/store';
-import { addMinutes, clashes, clock, gapBetween, longDay, money, ordered, partOf, span, toMin, uid, zonedIso } from '@/lib/time';
+import { addMinutes, clashes, clock, gapBetween, longDay, money, ordered, partOf, shortDay, span, toMin, uid, zonedIso } from '@/lib/time';
 import { ITEM_CATEGORIES, PARTS, type Day, type Item, type ItemCategory, type Part, type Plan } from '@/lib/types';
 import { SuggestSheet } from './SuggestSheet';
 
@@ -135,7 +135,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
             <Row item={item} clash={!!next && clashes(item, next) ? next.title : undefined} onOpen={() => setEditing(item)} onStatus={status => patchItem(plan.id, day.date, item.id, { status })} />
             {item.category === 'flight' && <FlightRouteHint plan={plan} item={item} departFromHome={item.id === firstFlightId} transferToStay={item.id === arrivalFlightId} />}
             {gap && gap.free && gap.mins >= 120 ? (
-              <div className="my-4 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-[18px]">
+              <div className="my-4 ml-[72px] flex flex-col gap-3 border-y border-line bg-surface p-[18px]">
                 <div className="flex flex-col gap-1">
                   <Eyebrow>Open time</Eyebrow>
                   <div className="font-serif text-[22px] leading-tight font-medium">{span(gap.mins)} free before {next.title}</div>
@@ -147,7 +147,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
                 </div>
               </div>
             ) : gap || travel ? (
-              <div className={clsx('flex min-h-11 items-center gap-2.5 py-2 pl-20 text-xs', tight ? 'font-medium text-bad' : 'text-muted')}>
+              <div className={clsx('flex min-h-11 items-center gap-2.5 py-2 pl-[72px] text-xs', tight ? 'font-medium text-bad' : 'text-muted')}>
                 <span className="w-5 shrink-0 border-t border-dashed border-ring" />
                 <span>{tight ? travel : [gap && (gap.free ? `${span(gap.mins)} free` : `${span(gap.mins)} until ${next.title}`), travel].filter(Boolean).join(' · ')}</span>
               </div>
@@ -201,7 +201,7 @@ function FlightRouteHint({ plan, item, departFromHome, transferToStay }: { plan:
   const departureUnavailable = departFromHome && !missingHome && !missingDepartureAirport && (!readyHome || (route !== null && !homeMins));
   const arrivalPending = showArrival && readyStay && route === null;
   const arrivalUnavailable = showArrival && !missingStay && !plan.stay?.tbd && (!readyStay || (route !== null && !stayMins));
-  return <div className="ml-20 mt-2 mb-4 flex flex-col gap-1 rounded-xl bg-tint px-4 py-3 text-[13px] text-accent">
+  return <div className="ml-[72px] mt-2 mb-4 flex flex-col gap-1 border-y border-accent bg-tint px-4 py-3 text-[13px] text-ink">
     {leave && homeMins && <span><strong>Leave home by {clock(leave.time)}</strong>{leave.date !== item.startDate ? ` on ${longDay(leave.date)}` : ''} · {span(homeMins)} drive with traffic estimate · 3 hours for check-in, checked bags and security</span>}
     {departurePending && <span><strong>Leave home by —</strong> Calculating the drive to the airport, plus 3 hours for check-in, checked bags and security.</span>}
     {departureUnavailable && <span><strong>Leave home by —</strong> Allow your travel time plus 3 hours for check-in, checked bags and security.</span>}
@@ -220,20 +220,57 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
   const swipe = useSwipe(() => onStatus(done ? 'todo' : 'done'), () => onStatus(skipped ? 'todo' : 'skipped'));
   const flight = item.flight;
   const details = [flight?.number && [flight.airline, flight.number].filter(Boolean).join(' '), flight?.from && flight?.to ? `${flight.from} to ${flight.to}` : item.place, item.startDate && item.endDate && item.endDate !== item.startDate ? `Arrives ${longDay(item.endDate)}` : item.start && item.end && (!item.endDate || item.endDate === item.startDate) ? span(toMin(item.end) - toMin(item.start)) : null, item.cost ? money(item.cost) : null, skipped ? 'Skipped' : null].filter(Boolean);
+  if (item.category === 'flight') {
+    const from = airportKey(flight?.from).toUpperCase() || '—';
+    const to = airportKey(flight?.to).toUpperCase() || '—';
+    const departsAt = item.startDate && item.start ? Date.parse(`${item.startDate}T${item.start}:00Z`) : NaN;
+    const arrivesAt = item.endDate && item.end ? Date.parse(`${item.endDate}T${item.end}:00Z`) : NaN;
+    const duration = Number.isFinite(departsAt) && Number.isFinite(arrivesAt) && arrivesAt > departsAt ? span(Math.round((arrivesAt - departsAt) / 60000)) : null;
+    const arrivalLabel = item.end ? `${item.endDate && item.endDate !== item.startDate ? `${shortDay(item.endDate)} · ` : ''}${clock(item.end)}` : '—';
+    return (
+      <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
+        <div className={clsx('num pt-1 text-[13px] leading-tight', done || skipped ? 'text-muted' : 'font-bold')}>
+          {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
+          {item.end && <div className="pt-1 font-normal text-muted">{clock(item.end)}</div>}
+        </div>
+        <div className={clsx('flight-ticket overflow-hidden border border-edge bg-surface', (done || skipped) && 'opacity-65')}>
+          <span className="absolute inset-y-0 left-0 w-9 bg-accent" aria-hidden="true" />
+          <button type="button" onClick={onOpen} className="relative z-[1] flex w-full flex-col text-left">
+            <span className="flex items-start justify-between gap-3 px-4 pt-3 pb-2 pl-12 pr-12">
+              <span className="text-[10px] font-bold uppercase tracking-[.2em] text-muted">Flight{flight?.number ? ` · ${flight.number}` : ''}</span>
+              {flight?.airline && <span className="truncate text-[9px] font-bold uppercase tracking-[.12em] text-muted">{flight.airline}</span>}
+            </span>
+            <span className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-y border-line px-4 py-3 pl-12">
+              <span><strong className="block font-serif text-[38px] leading-none font-bold tracking-[-0.03em]">{from}</strong><span className="mt-1 block truncate text-[10px] uppercase tracking-[.16em] text-muted">{flight?.from}</span></span>
+              <Arrow className="text-muted" width={24} height={24} aria-hidden="true" />
+              <span><strong className="block font-serif text-[38px] leading-none font-bold tracking-[-0.03em]">{to}</strong><span className="mt-1 block truncate text-[10px] uppercase tracking-[.16em] text-muted">{flight?.to}</span></span>
+            </span>
+            <span className="flight-ticket-cut grid grid-cols-3 gap-3 px-4 py-3 pl-12 text-[10px] uppercase tracking-[.14em] text-muted">
+              <span>Departs<strong className="num mt-1 block text-[13px] tracking-normal text-ink">{item.start ? clock(item.start) : '—'}</strong></span>
+              <span>Arrives<strong className="num mt-1 block text-[13px] tracking-normal text-ink">{arrivalLabel}</strong></span>
+              <span>Duration<strong className="num mt-1 block text-[13px] tracking-normal text-ink">{duration ?? '—'}</strong></span>
+            </span>
+            {(item.note || clash) && <span className={clsx('px-4 py-2 pl-12 text-[12px]', clash ? 'text-bad' : 'text-muted')}>{clash ? `Runs into ${clash}` : item.note}</span>}
+          </button>
+          <div className="absolute top-1 right-1 z-[3]"><Check state={item.status} label={done ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(done || skipped ? 'todo' : 'done'); }} /></div>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div {...swipe} className="flex items-start gap-4">
-      <div className={clsx('num w-16 shrink-0 pt-1.5 text-[13px]', done || skipped ? 'text-muted' : 'font-semibold')}>
+    <div {...swipe} className="grid grid-cols-[64px_1fr_auto] items-start border-t border-line py-4 sm:grid-cols-[76px_1fr_auto]">
+      <div className={clsx('num pt-1 text-[13px]', done || skipped ? 'text-muted' : 'font-bold')}>
         {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
         {item.end && <div className="pt-0.5 font-normal text-muted">{clock(item.end)}</div>}
       </div>
-      <button type="button" onClick={onOpen} className="-mx-2 flex flex-1 flex-col gap-0.5 rounded-xl px-2 py-1 text-left transition-colors hover:bg-wash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
-        <span className="mb-0.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.11em] text-brass"><CategoryIcon category={item.category} width={14} height={14} />{ITEM_CATEGORIES.find(c => c.id === (item.category ?? 'activity'))?.label}</span>
-        <span className={clsx('font-serif text-2xl leading-[1.15] transition-colors', done ? 'font-medium text-muted line-through' : skipped ? 'font-medium text-muted' : 'font-semibold')}>{item.title}</span>
+      <button type="button" onClick={onOpen} className="flex flex-col gap-0.5 px-2 py-1 text-left transition-colors hover:bg-wash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
+        <span className="mb-0.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-muted"><CategoryIcon category={item.category} width={13} height={13} />{ITEM_CATEGORIES.find(c => c.id === (item.category ?? 'activity'))?.label}</span>
+        <span className={clsx('font-serif text-[24px] leading-[1.05] tracking-[-0.015em] transition-colors', done ? 'font-medium text-muted line-through' : skipped ? 'font-medium text-muted' : 'font-bold')}>{item.title}</span>
         {details.length > 0 && <span className="text-[13px] text-muted">{details.join(' · ')}</span>}
         {item.note && <span className="text-[13px] text-muted">{item.note}</span>}
         {clash && <span className="text-[13px] font-medium text-bad">Runs into {clash}</span>}
       </button>
-      <div className="-mt-1.5">
+      <div className="-mt-1">
         <Check state={item.status} label={done ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(done || skipped ? 'todo' : 'done'); }} />
       </div>
     </div>

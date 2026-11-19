@@ -2,25 +2,28 @@
 
 /* Two themes share one set of names. Components only ever use the names. */
 :root, [data-theme="light"] {
-  --ground: #f7f7f5; --surface: #ffffff; --ink: #15181b; --muted: #5b6066;
-  --line: #e3e3df; --edge: #d9d9d4; --ring: #8c9096;
-  --accent: #1e4a3d; --on-accent: #ffffff; --tint: #e6eeea;
-  --brass: #7d5f27; --bad: #a8322b;
-  --wash: #f0f1ed; --shadow: 0 16px 36px rgb(21 24 27 / 0.12);
+  --ground: #eae9e8; --surface: #f4f2ef; --ink: #0b0b0b; --muted: #5c5c59;
+  --line: #aaa9a4; --edge: #8f8f8a; --ring: #696a66;
+  --accent: #887748; --on-accent: #ffffff; --tint: #ded9cb;
+  --brass: #887748; --bad: #9a3f32;
+  --wash: #e2e0dc; --shadow: 0 18px 42px rgb(11 11 11 / 0.18);
   color-scheme: light;
 }
 [data-theme="dark"] {
-  --ground: #101311; --surface: #181c1a; --ink: #f2f1ec; --muted: #a3a8a4;
-  --line: #2a302d; --edge: #3a413d; --ring: #7c837e;
-  --accent: #8fc7b0; --on-accent: #101311; --tint: #1d2b26;
-  --brass: #c9a96a; --bad: #f08a80;
-  --wash: #141a17; --shadow: 0 16px 36px rgb(0 0 0 / 0.3);
+  --ground: #151614; --surface: #1c1d1a; --ink: #eceae4; --muted: #aaa9a2;
+  --line: #454640; --edge: #64645d; --ring: #8b8b83;
+  --accent: #b39b60; --on-accent: #11120f; --tint: #2d2b23;
+  --brass: #c1a76a; --bad: #ef8a7b;
+  --wash: #20211e; --shadow: 0 18px 42px rgb(0 0 0 / 0.38);
   color-scheme: dark;
 }
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Lato", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Finlandica", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --radius-full: 4px;
   --color-ground: var(--ground);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
@@ -35,12 +38,12 @@
   --color-bad: var(--bad);
   --color-wash: var(--wash);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-rise: rise 0.36s var(--ease-out-expo) both;
+  --animate-rise: rise 0.42s var(--ease-out-expo) both;
   --animate-fade: fade 0.18s ease-out both;
   --animate-sheet: sheet 0.28s var(--ease-out-expo) both;
   --animate-pop: pop 0.28s var(--ease-out-expo) both;
 
-  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } }
   @keyframes fade { from { opacity: 0; } }
   @keyframes sheet { from { opacity: 0; transform: translateY(24px); } }
   @keyframes pop { from { transform: scale(0.4); } }
@@ -48,8 +51,8 @@
 
 @layer base {
   * { min-width: 0; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-ground text-ink font-sans antialiased; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; background: var(--ground); }
+  body { @apply bg-ground text-ink font-sans antialiased; -webkit-tap-highlight-color: transparent; letter-spacing: .005em; }
   ::selection { background: var(--tint); color: var(--ink); }
   * { scrollbar-color: var(--edge) transparent; }
   button, [role="button"], summary { cursor: pointer; }
@@ -69,10 +72,18 @@
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
 }
 
-/* The small brass label that sits above headings. */
-@utility eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--brass); }
+/* Architectural notation: quiet, exact and never decorative. */
+@utility eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
 @utility num { font-variant-numeric: tabular-nums; }
 @utility stagger { & > * { animation: var(--animate-rise); } & > :nth-child(2) { animation-delay: 0.04s; } & > :nth-child(3) { animation-delay: 0.08s; } & > :nth-child(n + 4) { animation-delay: 0.12s; } }
+
+.architect-rule { border-color: var(--line); }
+.flight-ticket { position: relative; isolation: isolate; }
+.flight-ticket::before,
+.flight-ticket::after { content: ""; position: absolute; z-index: 2; top: 68%; width: 12px; height: 12px; border-radius: 50%; background: var(--ground); border: 1px solid var(--line); }
+.flight-ticket::before { left: -7px; }
+.flight-ticket::after { right: -7px; }
+.flight-ticket-cut { border-top: 1px dashed var(--edge); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 

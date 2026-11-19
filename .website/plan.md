@@ -2,6 +2,8 @@
 Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 4.3.3 (from `package.json`; verified with a green production build and typecheck) · Mode: Operate
 
 ## Decisions
+- Replace the incumbent rounded “printed itinerary” system with The Architect’s Schedule as the app-wide design base: limestone ground, graphite ink, zinc rules, restrained aged-brass accents, architectural typography, flat surfaces, and 0–6px control geometry — because the user chose its precise, luxurious restraint. (user)
+- Treat flights as the sole Departure Ledger exception inside that same system: flight rows use boarding-pass structure, large airport codes, tabular local times, perforation logic, and compact connection segments; ordinary activities remain measured architectural schedule rows — because flights should be visually emphasized without turning the whole planner into an airport board. (user)
 - Refine the existing “printed itinerary” visual identity instead of replacing it — because `DESIGN.md` is coherent and product-specific; the request confirmed this direction. (user)
 - Cover the full app surface: home, plan workspace and its modes, plan creation, profile, sharing, and public view — because the request is for the Plan A website rather than a named screen. (director)
 - Keep motion subtle and feedback-led — because Plan A is an operate-mode, phone-first planning tool and its documented design system already limits motion to state changes. (director)
@@ -44,6 +46,23 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 18 | Populate flight time-zone dropdowns from the full browser IANA database and show date-aware UTC offsets | impeccable harden → clarify → proof-of-work | 17 | done |
 | 19 | Distill Profile around planning preferences, add trustworthy save feedback and a product-specific planning-style summary, then polish secondary settings | impeccable distill → delight → polish → proof-of-work | 4 | done |
 | 20 | Show home-departure guidance only on the trip's first flight, reserve arrival transfer for the final connected outbound flight, and add a luggage-aware leave-home placeholder and buffer | impeccable harden → clarify → proof-of-work | 9 | done |
+| 21 | Replace the whole-app visual system with The Architect’s Schedule, including rectilinear controls, measured grids, restrained radii, and cohesive light/dark tokens | impeccable overdrive → build → proof-of-work | 1–20 | done |
+| 22 | Build a Departure Ledger flight treatment inside the architectural timeline while keeping non-flight activities in the base schedule language | impeccable shape → build → proof-of-work | 21 | done |
+| 23 | Verify all primary routes at phone and desktop sizes, run detector and independent finish review, then document the shipped system | impeccable audit → finish review → document | 21, 22 | done |
+
+## Direction contract
+
+**THESIS:** Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. Its defining move is a continuous itinerary grid whose precision makes complex days feel composed. Flights may become boarding passes, but no other content borrows airport costume.
+
+**OWN-WORLD:** Limestone ground, graphite ink, zinc secondary text and hairlines, with aged brass used sparingly for selection and flight indexing. Geometry is square or 4–6px, typography is architectural and editorial, and depth comes from rules and spacing rather than shadows.
+
+**STORY:** The planner immediately sees the trip’s structure, reads ordinary activities as a calm chronological schedule, and recognizes flights as information-dense travel documents. They can scan local times, connections, and the next action without losing the larger day.
+
+**FIRST VIEWPORT:** A compact trip header and measured date index lead into a two-column time rail. Activities are unboxed ruled rows. Flights alone expand into boarding-pass modules with airport codes, departure/arrival details, and a completion control. Rectilinear mode navigation anchors the bottom.
+
+**FORM:** The Architect’s Schedule is the chosen assigned direction, first in the ordered set, from seed `f3d4a487`. Departure Ledger donates only the flight-entry topology. Approved comp: `.impeccable/mocks/hybrid-ledger-grid.png`.
+
+**FINISH:** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 ## Deferred
 - Worker modularization and CI hardening — worthwhile code-health work, but not needed to safely deliver this design refinement.

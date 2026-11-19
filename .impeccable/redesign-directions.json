@@ -1,0 +1,79 @@
+{
+  "title": "Choose Plan A's new visual world",
+  "question": "All three directions remove the bubble-heavy geometry. Choose the world that should govern the entire app.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Architect's Schedule",
+      "kicker": "THE ROLL",
+      "lineage": "architectural material schedules, drawing sets and private residence specifications",
+      "thesis": "Plan A becomes a precise spatial instrument: every day is a measured sheet, every event a placed detail.",
+      "palette": ["#F1F0EA", "#171A18", "#6E756E", "#A1844D"],
+      "materials": ["limestone paper", "graphite rules", "aged brass indexing"],
+      "viewport": "A sharp two-zone plan index opens into one measured itinerary sheet, with the next journey anchored by oversized type and a single brass coordinate.",
+      "risk": "The discipline can feel austere if the typography and empty space are not handled with warmth.",
+      "raised": [
+        {"from": "Variable Type Specimen", "raise": "Extreme scale contrast makes the active plan unmistakable without adding containers."},
+        {"from": "Botanical Folio", "raise": "Every day shares one fixed timeline baseline, so change is legible at a glance."},
+        {"from": "Design Annual", "raise": "Registration-level alignment and one-pixel rules give every state a finished, signed-off quality."},
+        {"from": "Departure Board", "raise": "State changes preserve row identity and move in place rather than blinking or remounting."}
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Maison Voyage",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "couture order books, private-client portfolios and fragrance packaging",
+      "thesis": "The trip is treated like a private commission: quiet, tactile and edited down to only what deserves attention.",
+      "palette": ["#EEEAE2", "#141412", "#5C625C", "#B79B67"],
+      "materials": ["bone stock", "black lacquer", "champagne foil"],
+      "viewport": "One monumental plan name sits against an almost empty field; plans and actions resolve as sharp folio tabs and ruled entries rather than cards.",
+      "risk": "This is the most luxurious direction, but it needs ruthless restraint to avoid becoming a fashion-site costume.",
+      "comp": ".impeccable/mocks/decision/model-pick.webp"
+    },
+    {
+      "id": "challenger-departure",
+      "label": "Departure Ledger",
+      "verdict": "competitive",
+      "lineage": "segmented boarding passes and live international gate boards",
+      "thesis": "Plan A becomes a living departure ledger where time orders everything and changed plans visibly settle into place.",
+      "palette": ["#EEEFEA", "#121513", "#697068", "#C44B37"],
+      "materials": ["anodized aluminum", "uncoated ticket stock", "split-flap ink"],
+      "viewport": "A fixed-column journey board ranks plans by departure, while the active trip opens as one segmented travel document with tabular time and route data.",
+      "case": "It wins on product clarity and interaction; the architectural direction remains stronger on quiet luxury.",
+      "risk": "The travel connection is immediate, but the world can feel airport-utilitarian rather than private and luxurious.",
+      "comp": ".impeccable/mocks/decision/challenger-departure.webp",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board.webp"
+    },
+    {
+      "id": "challenger-design-annual",
+      "label": "Registered Annual",
+      "verdict": "declined",
+      "lineage": "uncoated design annual plate sections",
+      "thesis": "The itinerary is presented as a signed plate sequence with typographic registration furniture.",
+      "palette": ["#F5F4F0", "#16181A", "#C9C7C4", "#D7D7E8"],
+      "materials": ["uncoated stock", "registration marks", "letterpress seal"],
+      "viewport": "A continuous plate sheet gives every plan gallery-like space and precise credit rows.",
+      "case": "Beautiful and luxurious, but less task-legible than the schedule and less specific to planning than the departure ledger.",
+      "kept": "Its registration precision raises the chosen architectural system.",
+      "risk": "It can turn an operating app into a portfolio that asks to be admired rather than used.",
+      "hero": "https://impeccable.style/worlds/cards/design-annual-s-plate-section-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/design-annual-s-plate-section.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "comp", "toggle": true},
+  "canon": true,
+  "canonCard": {
+    "label": "Luxury travel planner",
+    "thesis": "A familiar premium itinerary app, executed with crisp cards, restrained color and excellent spacing.",
+    "palette": ["#F5F3EE", "#171917", "#3D5B50", "#B59A67"],
+    "materials": ["fine paper", "hairline borders", "subtle depth"],
+    "viewport": "A polished dashboard leads with the next trip, followed by a clean card list and conventional bottom navigation.",
+    "risk": "Highly usable and tasteful, but still recognizably the category standard rather than a new Plan A world.",
+    "comp": ".impeccable/mocks/decision/canon.webp"
+  },
+  "steer": true
+}

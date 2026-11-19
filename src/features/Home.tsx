@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
-import { Person } from '@/components/icons';
+import { Arrow, Person } from '@/components/icons';
 import { Button, Eyebrow, IconButton, Page, ScreenHeading, useSwipe } from '@/components/ui';
 import { addPlan, go, plansAtom, profileAtom, removePlan, sessionAtom, syncAtom } from '@/lib/store';
 import { samplePlan } from '@/lib/templates';
@@ -27,12 +27,17 @@ function standing(p: Plan): { when: string; detail: string } {
 function PlanCard({ plan, lead }: { plan: Plan; lead: boolean }) {
   const s = standing(plan), total = planned(plan);
   const swipe = useSwipe(() => {}, () => { if (confirm(`Delete "${plan.title}"? This cannot be undone.`)) removePlan(plan.id); });
-  return <div className="relative overflow-hidden rounded-2xl bg-bad">
+  return <div className="relative overflow-hidden rounded-[4px] bg-bad">
     <div aria-hidden="true" className="absolute inset-y-0 right-0 flex w-24 items-center justify-center text-sm font-semibold text-white">Delete</div>
-    <button {...swipe} type="button" onClick={() => go(`/plan/${plan.id}`)} className={clsx('group relative flex w-full flex-col gap-3.5 rounded-2xl p-[18px] text-left transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[.99]', lead ? 'bg-ink text-ground' : 'border border-line bg-surface hover:border-ink')}>
-      <span className={clsx('flex items-center justify-between text-xs font-semibold', lead ? 'opacity-80' : 'text-muted')}><span className="uppercase tracking-[.1em]">{KINDS.find(k => k.id === plan.kind)?.label}</span><span>{s.when === 'Happening now' || s.when === 'Past' ? s.when : dateRange(first(plan), last(plan))}</span></span>
-      <span className="font-serif text-3xl leading-none font-semibold">{plan.title}</span>
-      <span className={clsx('flex justify-between gap-3 border-t pt-3 text-[13px]', lead ? 'border-ground/20 opacity-80' : 'border-line text-muted')}><span className="truncate"><span className="font-medium">{s.when}</span> · {s.detail}</span>{total > 0 && <span className="num shrink-0">{money(total)} planned</span>}</span>
+    <button {...swipe} type="button" onClick={() => go(`/plan/${plan.id}`)} className={clsx('group relative flex w-full flex-col border border-line bg-surface text-left transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-ink active:translate-y-0 active:scale-[.995]', lead && 'border-ink')}>
+      <span className="flex items-stretch">
+        <span className={clsx('w-2 shrink-0', lead ? 'bg-accent' : 'bg-line')} aria-hidden="true" />
+        <span className="flex min-w-0 flex-1 flex-col gap-4 p-[18px]">
+          <span className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[.18em] text-muted"><span>{KINDS.find(k => k.id === plan.kind)?.label}</span><span className="num">{s.when === 'Happening now' || s.when === 'Past' ? s.when : dateRange(first(plan), last(plan))}</span></span>
+          <span className="font-serif text-[30px] leading-none font-bold tracking-[-0.025em]">{plan.title}</span>
+          <span className="flex justify-between gap-3 border-t border-line pt-3 text-[13px] text-muted"><span className="truncate"><span className="font-bold text-ink">{s.when}</span> · {s.detail}</span>{total > 0 && <span className="num shrink-0">{money(total)} planned</span>}</span>
+        </span>
+      </span>
     </button>
   </div>;
 }
@@ -49,15 +54,15 @@ export function Home() {
   const list = [...live, ...past];
 
   return (
-    <Page className="stagger gap-8 pb-10">
-      <header className="flex items-center justify-between">
-        <div className="font-serif text-[26px] leading-none font-medium">Plan <span className="italic">A</span></div>
+    <Page className="stagger gap-10 pb-10">
+      <header className="flex items-center justify-between border-b border-ink pb-4">
+        <div className="font-serif text-[27px] leading-none font-bold tracking-[-0.03em]">Plan A</div>
         <IconButton label={session ? 'Your profile' : 'Sign in or create an account'} onClick={() => go('/profile')} className="border border-edge bg-surface text-sm font-semibold">{session && profile.name ? profile.name[0].toUpperCase() : <Person width={18} height={18} />}</IconButton>
       </header>
 
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-5 border-b border-line pb-9">
         <ScreenHeading title={<>What are we <em>planning</em> next{profile.name ? `, ${profile.name}` : ''}?</>} detail={list.length > 0 ? 'Your next plan is ready when you are. Keep the details here, and the day moving once it starts.' : undefined} />
-        <Button variant="primary" size="lg" onClick={() => go('/new')}>Begin a plan</Button>
+        <Button variant="primary" size="lg" className="self-start sm:min-w-52" onClick={() => go('/new')}>Begin a plan <Arrow width={17} height={17} /></Button>
       </section>
 
       {list.length > 0 ? (

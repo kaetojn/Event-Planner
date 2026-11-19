@@ -1,96 +1,278 @@
-# Design system: Plan A
+---
+name: Plan A
+description: A measured architectural schedule for complex days, with flights treated as information-dense travel documents.
+colors:
+  limestone-ground: "#eae9e8"
+  limestone-surface: "#f4f2ef"
+  graphite-ink: "#0b0b0b"
+  zinc-muted: "#5c5c59"
+  zinc-line: "#aaa9a4"
+  zinc-edge: "#8f8f8a"
+  zinc-ring: "#696a66"
+  aged-brass: "#887748"
+  brass-tint: "#ded9cb"
+  on-brass: "#ffffff"
+  limestone-wash: "#e2e0dc"
+  oxide-error: "#9a3f32"
+  night-ground: "#151614"
+  night-surface: "#1c1d1a"
+  chalk-ink: "#eceae4"
+  night-muted: "#aaa9a2"
+  night-line: "#454640"
+  night-edge: "#64645d"
+  night-ring: "#8b8b83"
+  night-brass: "#b39b60"
+  night-brass-label: "#c1a76a"
+  night-tint: "#2d2b23"
+  on-night-brass: "#11120f"
+  night-wash: "#20211e"
+  night-error: "#ef8a7b"
+typography:
+  display:
+    fontFamily: "Finlandica, Arial Narrow, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "42px"
+    fontWeight: 700
+    lineHeight: 0.98
+    letterSpacing: "-0.03em"
+  headline:
+    fontFamily: "Finlandica, Arial Narrow, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.025em"
+  title:
+    fontFamily: "Finlandica, Arial Narrow, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "-0.015em"
+  body:
+    fontFamily: "Lato, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "0.005em"
+  label:
+    fontFamily: "Lato, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "10px"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "0.2em"
+rounded:
+  none: "0px"
+  check: "2px"
+  icon: "3px"
+  control: "4px"
+  container: "6px"
+  sheet-desktop: "8px"
+  sheet-mobile-top: "12px"
+spacing:
+  hairline: "1px"
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "20px"
+  xxl: "24px"
+  section: "32px"
+components:
+  button-primary:
+    backgroundColor: "{colors.aged-brass}"
+    textColor: "{colors.on-brass}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "0 16px"
+    height: "44px"
+  button-secondary:
+    backgroundColor: "{colors.limestone-surface}"
+    textColor: "{colors.graphite-ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "0 16px"
+    height: "44px"
+  field:
+    backgroundColor: "{colors.limestone-surface}"
+    textColor: "{colors.graphite-ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "0 12px"
+    height: "48px"
+  check:
+    backgroundColor: "{colors.aged-brass}"
+    textColor: "{colors.on-brass}"
+    rounded: "{rounded.check}"
+    size: "24px"
+  mode-active:
+    backgroundColor: "{colors.aged-brass}"
+    textColor: "{colors.on-brass}"
+    typography: "{typography.label}"
+    rounded: "{rounded.none}"
+    height: "48px"
+---
+
+# Design System: Plan A
 
 ## Overview
 
-**North star: "The printed itinerary."** The app should feel like a well-set page from a good hotel: a serif headline, quiet labels, plenty of white space, and one confident colour. It is editorial and calm, and it stays out of the way of the plan.
+**Creative North Star: "The Architect's Schedule"**
 
-- One serif headline per screen, often with a single word in italic.
-- Small brass labels in capitals above headings.
-- Flat surfaces separated by hairlines. Shadows only on things that float.
-- Pill-shaped controls, 44px tall or more.
-- Light and dark themes with the same structure.
+Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. Its defining move is a continuous itinerary grid whose precision makes complex days feel composed: a compact trip header, a measured date index, a fixed time rail, and calm chronological rows that preserve the shape of the day.
 
-## Colour
+The visual world is limestone, graphite, zinc, and aged brass. Finlandica supplies condensed editorial authority; Lato handles instructions and dense operational detail. Space, rules, and alignment create hierarchy. Flights alone may expand into boarding-pass modules because that topology improves travel scanning; nothing else borrows airport costume.
 
-Components use the names, never the values. Both themes are defined in `src/index.css`.
+**Key Characteristics:**
 
-| Name | Light | Dark | Use |
-|---|---|---|---|
-| `ground` | `#f7f7f5` | `#101311` | Page background |
-| `surface` | `#ffffff` | `#181c1a` | Cards, fields, the mode bar |
-| `ink` | `#15181b` | `#f2f1ec` | Text. Also the fill of the selected mode, day and lead card |
-| `muted` | `#5b6066` | `#a3a8a4` | Secondary text |
-| `line` | `#e3e3df` | `#2a302d` | Hairlines and card borders |
-| `edge` | `#d9d9d4` | `#3a413d` | Borders on fields and secondary buttons |
-| `ring` | `#8c9096` | `#7c837e` | The empty check circle |
-| `accent` | `#1e4a3d` | `#8fc7b0` | Bottle green: primary buttons, completed checks, progress |
-| `on-accent` | `#ffffff` | `#101311` | Text on accent |
-| `tint` | `#e6eeea` | `#1d2b26` | Soft buttons |
-| `brass` | `#7d5f27` | `#c9a96a` | Eyebrow labels only |
-| `bad` | `#a8322b` | `#f08a80` | Over budget, overlaps, destructive actions |
+- Continuous ruled schedules instead of floating activity cards.
+- Rectilinear 0–6px geometry for ordinary interface elements.
+- Finlandica headlines and titles paired with compact Lato notation.
+- Aged brass reserved for selection, completion, primary action, and flight indexing.
+- Light and dark themes that preserve identical hierarchy and interaction semantics.
+- Information-dense flight tickets inside an otherwise unboxed itinerary.
 
-**Rules**
+## Colors
 
-- Accent is for action and completion. Do not use it for decoration.
-- Brass is for eyebrow labels. It is never a fill and never body text.
-- "Selected" is ink on ground reversed (`bg-ink text-ground`), not accent.
-- The theme is Match device, Light or Dark, chosen in Profile and applied before first paint.
+The palette reads like drafting materials: limestone paper, graphite type, zinc rules, and a restrained aged-brass indexing colour.
 
-## Type
+### Primary
 
-- **Serif:** Cormorant Garamond (500, 600, italic 500). Headlines, plan and item titles, hero numbers. Never below 20px; its letters are small for their size.
-- **Sans:** Inter (400, 500, 600). Everything else.
+- **Aged Brass:** The scarce action colour. Use it for selected dates and modes, primary actions, completed checks, progress, focus outlines, and the flight index strip.
+- **Night Brass:** The dark-theme counterpart, tuned for contrast on near-black limestone rather than decorative warmth.
 
-| Role | Face | Size | Weight |
-|---|---|---|---|
-| Screen headline | Serif | 40 to 44px, line-height 1.02 to 1.05 | 600, with one italic word at 500 |
-| Hero number | Serif, tabular | 40 to 56px | 600 |
-| Item title | Serif | 24px | 600; 500 when done or skipped |
-| Card title | Serif | 30px | 600 |
-| Body | Sans | 15 to 16px | 400 |
-| Detail | Sans | 13px | 400 |
-| Time | Sans, tabular | 13px | 600 |
-| Eyebrow | Sans | 11px, 0.14em tracking, capitals | 600 |
+### Secondary
 
-Inputs are 16px so iPhones do not zoom on focus. All times and money use tabular figures (`num`).
+- **Oxide Error:** Reserved for destructive actions, overlaps, and over-budget states. It never substitutes for brass as a general accent.
+
+### Neutral
+
+- **Limestone Ground / Night Ground:** The continuous page field.
+- **Limestone Surface / Night Surface:** Slightly differentiated controls, fields, and bounded modules.
+- **Graphite Ink / Chalk Ink:** Primary type, strong rules, and selected inverse states.
+- **Zinc Muted / Night Muted:** Secondary facts, annotations, and inactive navigation.
+- **Zinc Line, Edge, and Ring:** A three-step structural hierarchy for hairlines, control outlines, and incomplete checks.
+- **Limestone Wash / Night Wash:** Hover feedback that does not create a new layer.
+- **Brass Tint / Night Tint:** Quiet contextual emphasis around route guidance and soft actions.
+
+**The Scarce Brass Rule.** Brass communicates action, selection, completion, or flight indexing. Do not spend it on decoration or ordinary body copy.
+
+**The Semantic Parity Rule.** Dark mode changes values, never roles: every light token has the same purpose and hierarchy at night.
+
+## Typography
+
+**Display Font:** Finlandica (with Arial Narrow and system sans fallbacks)
+
+**Body Font:** Lato (with system sans fallbacks)
+
+**Character:** Finlandica is condensed, architectural, and editorial without becoming ceremonial. Lato stays open and practical at small sizes, making dense times, costs, labels, and form guidance easy to scan.
+
+### Hierarchy
+
+- **Display** (700, 42px, 0.98 line-height): Screen and plan titles; one restrained italic phrase may use weight 500.
+- **Headline** (700, 28–30px, 1–1.15 line-height): Card titles, empty states, sheet titles, and summary statements.
+- **Title** (700, 24px, 1.05 line-height): Ordinary itinerary activities; completed or skipped items soften to weight 500.
+- **Body** (400, 15–16px, relaxed line-height): Instructions, details, form values, and explanatory text. Inputs remain 16px to prevent mobile focus zoom.
+- **Detail** (400–700, 13px): Times, destinations, costs, route notes, and metadata.
+- **Label** (700, 9–11px, 0.12–0.2em tracking, uppercase): Categories, eyebrows, ticket fields, and mode navigation.
+
+Times, dates, durations, and money use tabular figures. Airport codes use Finlandica at display scale, while the associated field labels remain Lato.
+
+**The Two-Face Rule.** Finlandica names and summarizes; Lato explains and operates. Do not set long instructions or dense form copy in Finlandica.
 
 ## Layout
 
-One column, at most 512px wide, with 24px side padding. Sections are 28 to 32px apart. Inside a plan, the mode bar floats at the bottom and content keeps 112px of bottom padding to clear it. Everything respects the phone's safe areas.
+Plan A is phone-first and centred within a 620px maximum content frame. The base inset is 20px and increases to 32px at the small breakpoint (640px). Vertical structure is carried by full-width rules, consistent 16–24px internal spacing, and 32px section intervals rather than independent card margins.
 
-## Shape and depth
+Inside a plan, the first viewport moves from a compact action header to plan title and metadata, then to a horizontally scrollable date index. The timeline is a measured two-column schedule: a 64px time rail on narrow screens, 76px from 640px upward, and flexible content to the right. Ordinary items stay as unboxed ruled rows. Gaps and route guidance align to the content column so the time rail remains continuous.
 
-- Buttons, chips, the mode bar and day indicators are full pills.
-- Fields are 12px. Cards are 16px. Sheets are 28px.
-- Cards are flat: `surface` with a `line` border. Only the mode bar and sheets cast a shadow.
+The four-mode navigation is fixed to the bottom, constrained to the same 620px frame, and divided into equal rectilinear cells. Plan content reserves 96px beneath itself and all bottom-aligned surfaces include the device safe area. Wider screens do not become dashboards; they preserve the single-job column, expose secondary header actions, and centre sheets as dialogs.
+
+Forms use one-column flow by default, paired two-column date/time or amount fields where the content remains legible. Overflowing category and date indexes scroll horizontally without forcing the page wider. Print removes application navigation, resolves the palette to white paper and black ink, and preserves break-safe itinerary sections.
+
+**The Continuous Grid Rule.** New itinerary content must align to the existing time rail and rules; do not introduce a floating card merely to group ordinary activity data.
+
+## Elevation & Depth
+
+The system is flat by default. Resting rows, plan summaries, fields, selectors, date cells, and navigation use tone, borders, and spacing instead of shadows. The only persistent shadow belongs to modal containment: a bottom sheet or centred dialog uses one broad ambient shadow over a dimmed backdrop. Autocomplete menus may use the same floating-layer logic.
+
+Motion supplies momentary depth: buttons lift by 1px on hover and compress on press; schedule sections rise 10px with a brief blur; sheets enter from 24px below; checks pop from reduced scale. State transitions run in roughly 180–420ms, with the exponential easing curve used for entrances and spring-back. All animations and transitions are disabled under `prefers-reduced-motion: reduce`.
+
+**The Rules-Before-Shadows Rule.** If a border, tonal change, or spacing break can express the hierarchy, use it. Shadows mean that a surface is temporarily above the page.
+
+## Shapes
+
+The ordinary form language is square or barely eased. Checks use 2px corners, icon controls 3px, buttons and fields 4px, and larger bounded containers no more than 6px. Tailwind aliases such as `rounded-full`, `rounded-xl`, and `rounded-2xl` intentionally resolve to this 4–6px architectural scale; they do not create pills or soft cards.
+
+Sheets are the single containment exception: the phone bottom sheet rounds only its exposed top corners to 12px, while the centred desktop dialog uses 8px. Progress bars and the small “today” indicator may be circular because they are signals, not containers. Flight-ticket edge notches are functional perforation cues and never migrate to other components.
+
+**The Rectilinear Default Rule.** Every new control or container starts at 0–4px and may reach 6px only when its scale needs it.
+
+**The Ticket Exception Rule.** Perforations, cut-outs, airport-code typography, and indexed colour strips belong only to flight entries.
 
 ## Components
 
-- **Button:** 44px (52px large) pill. Primary is accent; secondary is surface with an edge border; soft is tint with accent text; danger is bad-coloured text.
-- **Check:** a 28px circle in a 44px target. Empty ring to do, filled accent with a tick when done (it pops in), ring with a cross when skipped.
-- **Choice:** a large card with a serif title and a hint, used for one-question screens. Selected gains an accent border and a tick.
-- **Segmented:** a pill track; the selected option is ink.
-- **Timeline row:** time on the left, serif title and details in the middle, check on the right. Done items are struck through and muted.
-- **Gap:** a dashed tick and a muted line ("1 h 30 free"). Two hours or more of known free time becomes an Open time card with one action.
-- **Mode bar:** four equal pills at the bottom of a plan: Timeline, Checklist, Budget, Map.
-- **Sheet:** slides up from the bottom on phones and sits centred on wider screens. Title in serif, one primary action in the footer.
+Components feel precise, restrained, and thumb-ready. Interactive controls keep a minimum 44px target; visible focus uses a 2px brass outline with 2px offset, or a brass border plus restrained focus ring inside fields.
 
-## Motion
+### Buttons
 
-Short and purposeful: sections rise in over 0.36s with a small stagger, sheets slide up over 0.28s, checks pop, progress bars glide. Buttons press in to 97%. A row follows the finger when swiped and springs back. All motion is off under reduced-motion.
+- **Shape:** Rectilinear control corners (4px), 44px standard height or 52px large, with bold Lato labels.
+- **Primary:** Aged-brass fill with high-contrast on-brass text; use for the single main action in a context.
+- **Secondary:** Limestone surface with a zinc edge; hover strengthens the border to graphite.
+- **Soft / Ghost / Danger:** Brass tint for contextual action, unbounded graphite for quiet action, and oxide text for destructive action.
+- **Hover / Focus / Disabled:** Hover lifts 1px, press returns to the plane and scales to 98%, focus remains explicit, and disabled controls keep their footprint at 50% opacity.
 
-## Gestures
+### Choice and segmented controls
 
-- Tap the circle to complete. Tap the row to edit.
-- Swipe a timeline row right to complete, left to skip. Swiping again undoes it.
-- A short vibration confirms completion where the phone supports it.
+- **Choice:** A large 4px bordered answer with Finlandica title, compact hint, and square check. Selection uses a brass border and a second 1px ring.
+- **Segmented:** A 4px outer frame with 2px cells separated by zinc rules. The selected cell is graphite-on-limestone inverse, reserving brass for higher-priority selection surfaces.
+- **Category selectors:** Horizontally scrollable 44px controls whose inherited `rounded-full` alias resolves to 4px, never a capsule.
 
-## Do and don't
+### Cards / Containers
 
-- **Do** lead each screen with one serif headline or one hero number.
-- **Do** keep one mode on screen at a time.
-- **Do** work out the arithmetic and show it.
-- **Don't** put shadows on resting cards.
-- **Don't** use photographs or illustration as decoration; the type carries the page.
-- **Don't** use emoji as icons. Icons are thin line drawings.
-- **Don't** set long text in the serif.
+- **Plan summaries:** Bounded 4px surfaces with a narrow brass or zinc index strip, strong internal rule, and no shadow.
+- **Open time:** A full-width ruled insert aligned after the time rail, not a floating card.
+- **Ordinary schedule row:** Unboxed, border-top separated, with time at left, category/title/detail in the middle, and a square completion control at right.
+- **Flight ticket:** The only boarding-pass module. It uses a brass index strip, prominent airport codes, local departure and arrival times, duration, restrained circular edge notches, and a dashed cut line. It must never invent gate, terminal, status, or live operational data.
+
+### Inputs / Fields
+
+- **Style:** 48px limestone-surface fields with 4px corners, zinc edge, 12px horizontal inset, 16px text, and clear labels above.
+- **Focus:** Border changes to brass and a low-opacity 2px brass ring appears; the global fallback outline remains visible for keyboard navigation.
+- **Error / Disabled:** Error help uses oxide; disabled controls preserve legibility and do not accept pointer input.
+- **Grouping:** Related flight timing and airport fields are separated by full-width rules, not nested cards.
+
+### Sheets
+
+- **Mobile:** Bottom-aligned, maximum 92dvh, square lower edge, 12px exposed top corners, scrollable body, fixed header/footer, and safe-area-aware padding.
+- **Desktop:** Centred within a 576px maximum width with an 8px radius and full border.
+- **Behaviour:** Focus moves into the modal, Escape and backdrop close it, background scrolling is locked, and footer actions remain visible.
+
+### Navigation
+
+- **Date index:** A ruled horizontal strip of 48px cells. The selected date is brass-filled; unselected dates are muted with wash hover feedback.
+- **Mode navigation:** Four equal 48px cells fixed to the bottom, uppercase tracked Lato labels, strong top and bottom rules, brass active cell, and safe-area clearance.
+- **Back and add controls:** 44px square icon targets; the add control may carry the primary brass fill.
+
+### Completion and gesture states
+
+- **Check:** A 24px square inside a 44px target. Todo is an outlined zinc square, done is filled brass with a tick, and skipped retains an outline with a cross.
+- **Timeline gesture:** Swiping right completes and left skips; movement is clamped, springs back, and may provide a short vibration. Tapping the row edits without competing with the check target.
+- **Status treatment:** Done titles become muted and struck through; skipped titles mute without a strike. State is never conveyed by colour alone.
+
+## Do's and Don'ts
+
+### Do:
+
+- **Do** preserve the continuous time rail and chronological rules when adding itinerary data.
+- **Do** use Finlandica for titles, airport codes, and summary numbers while keeping operational copy in Lato.
+- **Do** keep brass scarce and semantic: action, selection, completion, focus, and flight indexing.
+- **Do** maintain role-for-role parity across light and dark themes.
+- **Do** expose local departure and arrival context for flights without losing the larger day.
+- **Do** retain 44px minimum targets, visible keyboard focus, semantic pressed/current states, modal focus handling, and reduced-motion support.
+
+### Don't:
+
+- **Don't** turn ordinary activities, gaps, or form groups into soft lifestyle cards.
+- **Don't** use pill geometry for containers or controls; Tailwind radius aliases must continue to resolve to the architectural 4–6px scale.
+- **Don't** apply boarding-pass styling, perforations, airport codes, or ticket cut-outs to anything except a flight.
+- **Don't** invent live flight facts such as gates, terminals, delays, or status.
+- **Don't** add shadows to resting content or introduce decorative gradients, photography, or illustration.
+- **Don't** let a desktop viewport turn the plan into a multi-panel dashboard; one mode remains the one job on screen.

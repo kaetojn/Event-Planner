@@ -11,7 +11,7 @@ export function Button({ variant = 'secondary', size = 'md', className, ...p }: 
       type="button"
       {...p}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[.97] disabled:pointer-events-none disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 rounded-[4px] font-bold tracking-[.02em] transition-[background-color,border-color,color,transform,box-shadow] duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[.98] disabled:pointer-events-none disabled:opacity-50',
         size === 'lg' ? 'h-[52px] px-6 text-[15px]' : 'h-11 px-4 text-sm',
         variant === 'primary' && 'bg-accent text-on-accent hover:brightness-95',
         variant === 'secondary' && 'border border-edge bg-surface text-ink hover:border-ink',
@@ -25,18 +25,18 @@ export function Button({ variant = 'secondary', size = 'md', className, ...p }: 
 }
 
 export function IconButton({ label, className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
-  return <button type="button" aria-label={label} {...p} className={clsx('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-200 hover:bg-wash active:scale-95 disabled:pointer-events-none disabled:opacity-50', className)} />;
+  return <button type="button" aria-label={label} {...p} className={clsx('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[3px] transition-[background-color,color,transform] duration-200 hover:bg-wash active:scale-95 disabled:pointer-events-none disabled:opacity-50', className)} />;
 }
 
 export const Eyebrow = ({ children, className }: { children: ReactNode; className?: string }) => <div className={clsx('eyebrow', className)}>{children}</div>;
 
 /** The shared phone-first frame keeps every screen on the same quiet editorial grid. */
-export const Page = ({ children, className }: { children: ReactNode; className?: string }) => <main className={clsx('mx-auto flex min-h-dvh w-full max-w-lg flex-col px-6 pt-5 pb-[max(32px,env(safe-area-inset-bottom))]', className)}>{children}</main>;
+export const Page = ({ children, className }: { children: ReactNode; className?: string }) => <main className={clsx('mx-auto flex min-h-dvh w-full max-w-[620px] flex-col px-5 pt-5 pb-[max(32px,env(safe-area-inset-bottom))] sm:px-8', className)}>{children}</main>;
 
 export function ScreenHeading({ title, detail, action }: { title: ReactNode; detail?: ReactNode; action?: ReactNode }) {
   return <header className="flex flex-col gap-2.5">
     {action && <div>{action}</div>}
-    <h1 className="font-serif text-[40px] leading-[1.04] font-semibold tracking-[-0.015em] [&_em]:font-medium">{title}</h1>
+    <h1 className="font-serif text-[42px] leading-[.98] font-bold tracking-[-0.03em] [&_em]:font-medium">{title}</h1>
     {detail && <p className="max-w-[38rem] text-[15px] leading-relaxed text-muted">{detail}</p>}
   </header>;
 }
@@ -45,9 +45,9 @@ export function ScreenHeading({ title, detail, action }: { title: ReactNode; det
 export function Check({ state, label, onClick }: { state: 'todo' | 'done' | 'skipped'; label: string; onClick: () => void }) {
   return (
     <button type="button" aria-label={label} aria-pressed={state === 'done'} onClick={onClick} className="-mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center">
-      {state === 'done' && <span className="inline-flex h-7 w-7 animate-pop items-center justify-center rounded-full bg-accent text-on-accent"><Tick width={14} height={14} /></span>}
-      {state === 'skipped' && <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-ring text-muted"><Cross width={12} height={12} /></span>}
-      {state === 'todo' && <span className="h-7 w-7 rounded-full border-[1.5px] border-ring" />}
+      {state === 'done' && <span className="inline-flex h-6 w-6 animate-pop items-center justify-center rounded-[2px] bg-accent text-on-accent"><Tick width={13} height={13} /></span>}
+      {state === 'skipped' && <span className="inline-flex h-6 w-6 items-center justify-center rounded-[2px] border border-ring text-muted"><Cross width={11} height={11} /></span>}
+      {state === 'todo' && <span className="h-6 w-6 rounded-[2px] border border-ring" />}
     </button>
   );
 }
@@ -55,21 +55,21 @@ export function Check({ state, label, onClick }: { state: 'todo' | 'done' | 'ski
 /** A large tappable answer, used for one-question-per-screen choices. */
 export function Choice({ selected, title, hint, onClick }: { selected: boolean; title: string; hint?: string; onClick: () => void }) {
   return (
-    <button type="button" aria-pressed={selected} onClick={onClick} className={clsx('flex items-center gap-4 rounded-2xl border bg-surface p-[18px] text-left transition active:scale-[.99]', selected ? 'border-accent ring-1 ring-accent' : 'border-line')}>
+    <button type="button" aria-pressed={selected} onClick={onClick} className={clsx('flex items-center gap-4 rounded-[4px] border bg-surface p-[18px] text-left transition active:scale-[.99]', selected ? 'border-accent ring-1 ring-accent' : 'border-line')}>
       <span className="flex flex-1 flex-col gap-1">
         <span className="font-serif text-2xl leading-tight font-semibold">{title}</span>
         {hint && <span className="text-[13px] text-muted">{hint}</span>}
       </span>
-      {selected ? <span className="inline-flex h-7 w-7 animate-pop items-center justify-center rounded-full bg-accent text-on-accent"><Tick width={14} height={14} /></span> : <span className="h-7 w-7 rounded-full border-[1.5px] border-ring" />}
+      {selected ? <span className="inline-flex h-6 w-6 animate-pop items-center justify-center rounded-[2px] bg-accent text-on-accent"><Tick width={13} height={13} /></span> : <span className="h-6 w-6 rounded-[2px] border border-ring" />}
     </button>
   );
 }
 
 export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void; label: string }) {
   return (
-    <div role="group" aria-label={label} className="grid gap-1 rounded-full border border-line bg-surface p-1" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+    <div role="group" aria-label={label} className="grid rounded-[4px] border border-line bg-surface p-1" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
       {options.map(o => (
-        <button key={o.id} type="button" aria-pressed={o.id === value} onClick={() => onChange(o.id)} className={clsx('h-11 rounded-full text-[13px] transition', o.id === value ? 'bg-ink font-semibold text-ground' : 'font-medium text-muted')}>{o.label}</button>
+        <button key={o.id} type="button" aria-pressed={o.id === value} onClick={() => onChange(o.id)} className={clsx('h-11 rounded-[2px] border-r border-line text-[13px] transition last:border-r-0', o.id === value ? 'bg-ink font-bold text-ground' : 'font-medium text-muted')}>{o.label}</button>
       ))}
     </div>
   );
@@ -79,7 +79,7 @@ export function Field({ label, hint, className, ...p }: InputHTMLAttributes<HTML
   return (
     <label className={clsx('flex flex-col gap-1.5', className)}>
       <span className="text-sm font-semibold">{label}</span>
-      <input {...p} className="h-12 w-full rounded-xl border border-edge bg-surface px-3 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" />
+      <input {...p} className="h-12 w-full rounded-[4px] border border-edge bg-surface px-3 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" />
       {hint && <span className="text-[13px] text-muted">{hint}</span>}
     </label>
   );
@@ -89,7 +89,7 @@ export function SelectField({ label, hint, className, children, ...p }: SelectHT
   return (
     <label className={clsx('flex flex-col gap-1.5', className)}>
       <span className="text-sm font-semibold">{label}</span>
-      <select {...p} className="h-12 w-full rounded-xl border border-edge bg-surface px-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20">
+      <select {...p} className="h-12 w-full rounded-[4px] border border-edge bg-surface px-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20">
         {children}
       </select>
       {hint && <span className="text-[13px] text-muted">{hint}</span>}
@@ -118,7 +118,7 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center print:hidden">
       <div className="absolute inset-0 animate-fade bg-black/45" onClick={onClose} />
-        <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-lg animate-sheet flex-col rounded-t-[28px] bg-ground shadow-[var(--shadow)] outline-none md:rounded-[28px]">
+        <div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative flex max-h-[92dvh] w-full max-w-xl animate-sheet flex-col rounded-t-[12px] border-x border-t border-line bg-ground shadow-[var(--shadow)] outline-none md:rounded-[8px] md:border">
         <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-2">
           <h2 className="font-serif text-[28px] leading-none font-semibold">{title}</h2>
           <IconButton label="Close" onClick={onClose} className="-mr-3 text-muted"><Cross /></IconButton>

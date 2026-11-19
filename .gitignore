@@ -1,3 +1,11 @@
 node_modules
 dist
 .DS_Store
+
+# Impeccable working evidence (keep the approved direction and design system)
+.impeccable/build/
+.impeccable/questions/
+.impeccable/review/
+.impeccable/mocks/*
+!.impeccable/mocks/hybrid-ledger-grid.png
+!.impeccable/mocks/hybrid-ledger-grid.png.json
