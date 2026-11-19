@@ -53,6 +53,42 @@ function TimeZoneOptions({ groups }: { groups: TimeZoneGroup[] }) {
 }
 
 const hhmm = (mins: number) => { const m = Math.max(0, Math.min(23 * 60 + 59, mins)); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+const AIRPORT_BUFFER_MINUTES = 180;
+
+type SequencedFlight = { item: Item; departs: number; arrives: number };
+
+const airportKey = (value?: string) => {
+  const codes = value?.toUpperCase().match(/\b[A-Z]{3}\b/g);
+  return codes?.at(-1) ?? value?.trim().toLocaleLowerCase('en-CA') ?? '';
+};
+
+/** Flights are sequenced across the whole trip, not independently within each displayed day. */
+const flightSequence = (plan: Plan): SequencedFlight[] => plan.days
+  .flatMap(day => day.items
+    .filter(item => item.category === 'flight')
+    .map(item => {
+      const startDate = item.startDate ?? day.date;
+      return {
+        item,
+        departs: Date.parse(`${startDate}T${item.start ?? '23:59'}:00Z`),
+        arrives: Date.parse(`${item.endDate ?? startDate}T${item.end ?? item.start ?? '23:59'}:00Z`),
+      };
+    }))
+  .sort((a, b) => a.departs - b.departs);
+
+/** The stay transfer belongs after the connected outbound journey, not after a later return flight. */
+const outboundArrivalFlightId = (flights: SequencedFlight[]) => {
+  let arrival = flights[0];
+  for (let index = 1; index < flights.length; index += 1) {
+    const previous = flights[index - 1], current = flights[index];
+    const previousArrival = airportKey(previous.item.flight?.to), currentDeparture = airportKey(current.item.flight?.from);
+    const sameAirport = !!previousArrival && previousArrival === currentDeparture;
+    const connectionWait = current.departs - previous.arrives;
+    if (!sameAirport || connectionWait < -12 * 60 * 60 * 1000 || connectionWait > 36 * 60 * 60 * 1000) break;
+    arrival = current;
+  }
+  return arrival?.item.id;
+};
 
 /** One day of the plan, in order, with the time between items and the travel between places worked out. */
 export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: () => void }) {
@@ -63,6 +99,9 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
   const items = ordered(day.items);
   const mode = plan.travel ?? 'drive';
   const legOf = useLegs(items, mode);
+  const flights = flightSequence(plan);
+  const firstFlightId = flights[0]?.item.id;
+  const arrivalFlightId = outboundArrivalFlightId(flights);
   const canSuggest = !!session && features.ai;
   const suggest = window && <SuggestSheet plan={plan} day={day} from={window.from} to={window.to} onClose={() => setWindow(null)} />;
 
@@ -94,7 +133,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
         return (
           <div key={item.id} className="animate-rise" style={{ animationDelay: `${Math.min(n, 6) * 40}ms` }}>
             <Row item={item} clash={!!next && clashes(item, next) ? next.title : undefined} onOpen={() => setEditing(item)} onStatus={status => patchItem(plan.id, day.date, item.id, { status })} />
-            {item.category === 'flight' && <FlightRouteHint plan={plan} item={item} />}
+            {item.category === 'flight' && <FlightRouteHint plan={plan} item={item} departFromHome={item.id === firstFlightId} transferToStay={item.id === arrivalFlightId} />}
             {gap && gap.free && gap.mins >= 120 ? (
               <div className="my-4 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-[18px]">
                 <div className="flex flex-col gap-1">
@@ -125,21 +164,22 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
   );
 }
 
-function FlightRouteHint({ plan, item }: { plan: Plan; item: Item }) {
+function FlightRouteHint({ plan, item, departFromHome, transferToStay }: { plan: Plan; item: Item; departFromHome: boolean; transferToStay: boolean }) {
   const session = useAtomValue(sessionAtom);
   const profile = useAtomValue(profileAtom);
   const { places } = useAtomValue(featuresAtom);
   const [route, setRoute] = useState<{ home?: number; stay?: number } | null>(null);
   const f = item.flight;
-  const readyHome = !!session && places && Number.isFinite(profile.homeLat) && Number.isFinite(profile.homeLng) && Number.isFinite(f?.fromLat) && Number.isFinite(f?.fromLng) && !!item.start && !!item.startDate;
-  const readyStay = !!session && places && Number.isFinite(f?.toLat) && Number.isFinite(f?.toLng) && Number.isFinite(plan.stay?.lat) && Number.isFinite(plan.stay?.lng);
+  const showArrival = transferToStay && plan.kind === 'trip';
+  const readyHome = departFromHome && !!session && places && Number.isFinite(profile.homeLat) && Number.isFinite(profile.homeLng) && Number.isFinite(f?.fromLat) && Number.isFinite(f?.fromLng) && !!item.start && !!item.startDate;
+  const readyStay = showArrival && !!session && places && Number.isFinite(f?.toLat) && Number.isFinite(f?.toLng) && Number.isFinite(plan.stay?.lat) && Number.isFinite(plan.stay?.lng);
   useEffect(() => {
     if (!session || (!readyHome && !readyStay)) return;
     let live = true;
     void (async () => {
       const result: { home?: number; stay?: number } = {};
       if (readyHome) {
-        const guess = addMinutes(item.startDate!, item.start!, -180);
+        const guess = addMinutes(item.startDate!, item.start!, -(AIRPORT_BUFFER_MINUTES + 60));
         const r = await api.route(session.token, [{ lat: profile.homeLat!, lng: profile.homeLng! }, { lat: f!.fromLat!, lng: f!.fromLng! }], 'drive', zonedIso(guess.date, guess.time, item.startZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone));
         result.home = r.legs[0]?.mins;
       }
@@ -151,16 +191,26 @@ function FlightRouteHint({ plan, item }: { plan: Plan; item: Item }) {
     })().catch(() => { if (live) setRoute({}); });
     return () => { live = false; };
   }, [session?.token, readyHome, readyStay, item.startDate, item.start, item.startZone, profile.homeLat, profile.homeLng, f?.fromLat, f?.fromLng, f?.toLat, f?.toLng, plan.stay?.lat, plan.stay?.lng, plan.travel]);
-  const missingHome = !Number.isFinite(profile.homeLat) || !Number.isFinite(profile.homeLng);
-  const missingStay = plan.kind === 'trip' && !plan.stay?.tbd && (!Number.isFinite(plan.stay?.lat) || !Number.isFinite(plan.stay?.lng));
+  const missingHome = departFromHome && (!Number.isFinite(profile.homeLat) || !Number.isFinite(profile.homeLng));
+  const missingDepartureAirport = departFromHome && (!Number.isFinite(f?.fromLat) || !Number.isFinite(f?.fromLng));
+  const missingStay = showArrival && !plan.stay?.tbd && (!Number.isFinite(plan.stay?.lat) || !Number.isFinite(plan.stay?.lng));
   const homeMins = route?.home, stayMins = route?.stay;
-  if (!homeMins && !stayMins && !missingHome && !missingStay) return null;
-  const leave = homeMins && item.startDate && item.start ? addMinutes(item.startDate, item.start, -(homeMins + 120)) : null;
+  if (!departFromHome && !showArrival) return null;
+  const leave = homeMins && item.startDate && item.start ? addMinutes(item.startDate, item.start, -(homeMins + AIRPORT_BUFFER_MINUTES)) : null;
+  const departurePending = departFromHome && readyHome && route === null;
+  const departureUnavailable = departFromHome && !missingHome && !missingDepartureAirport && (!readyHome || (route !== null && !homeMins));
+  const arrivalPending = showArrival && readyStay && route === null;
+  const arrivalUnavailable = showArrival && !missingStay && !plan.stay?.tbd && (!readyStay || (route !== null && !stayMins));
   return <div className="ml-20 mt-2 mb-4 flex flex-col gap-1 rounded-xl bg-tint px-4 py-3 text-[13px] text-accent">
-    {leave && homeMins && <span><strong>Leave home by {clock(leave.time)}</strong>{leave.date !== item.startDate ? ` on ${longDay(leave.date)}` : ''} · {span(homeMins)} drive with traffic estimate · 2 hours at the airport</span>}
+    {leave && homeMins && <span><strong>Leave home by {clock(leave.time)}</strong>{leave.date !== item.startDate ? ` on ${longDay(leave.date)}` : ''} · {span(homeMins)} drive with traffic estimate · 3 hours for check-in, checked bags and security</span>}
+    {departurePending && <span><strong>Leave home by —</strong> Calculating the drive to the airport, plus 3 hours for check-in, checked bags and security.</span>}
+    {departureUnavailable && <span><strong>Leave home by —</strong> Allow your travel time plus 3 hours for check-in, checked bags and security.</span>}
     {stayMins && <span><strong>{span(stayMins)} to your stay</strong> from the arrival airport</span>}
-    {missingHome && <span>Add your home address in Profile to calculate when to leave for the airport.</span>}
-    {plan.stay?.tbd && <span>Your stay is marked TBD. Add it later to calculate the arrival transfer.</span>}
+    {arrivalPending && <span><strong>Arrival transfer —</strong> Calculating travel time from the airport to your stay.</span>}
+    {arrivalUnavailable && <span><strong>Arrival transfer —</strong> Route estimate unavailable. Allow time to collect your bags and travel to your stay.</span>}
+    {missingHome && <span><strong>Leave home by —</strong> Add your home address in Profile to calculate it. Plan A will include 3 hours for check-in, checked bags and security.</span>}
+    {!missingHome && missingDepartureAirport && <span><strong>Leave home by —</strong> Choose the departure airport from search to calculate it. Plan A will include 3 hours for check-in, checked bags and security.</span>}
+    {showArrival && plan.stay?.tbd && <span>Your stay is marked TBD. Add it later to calculate the arrival transfer.</span>}
     {missingStay && <span>Add your hotel, rental or area in Edit to calculate the arrival transfer.</span>}
   </div>;
 }

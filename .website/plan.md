@@ -43,6 +43,7 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 17 | Stop the shared sheet from resetting focus after every controlled-field update on mobile and replace free-text time zones with native dropdowns | impeccable adapt → harden → proof-of-work | 16 | done |
 | 18 | Populate flight time-zone dropdowns from the full browser IANA database and show date-aware UTC offsets | impeccable harden → clarify → proof-of-work | 17 | done |
 | 19 | Distill Profile around planning preferences, add trustworthy save feedback and a product-specific planning-style summary, then polish secondary settings | impeccable distill → delight → polish → proof-of-work | 4 | done |
+| 20 | Show home-departure guidance only on the trip's first flight, reserve arrival transfer for the final connected outbound flight, and add a luggage-aware leave-home placeholder and buffer | impeccable harden → clarify → proof-of-work | 9 | done |
 
 ## Deferred
 - Worker modularization and CI hardening — worthwhile code-health work, but not needed to safely deliver this design refinement.
