@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CategoryIcon } from '@/components/icons';
 import { PlaceField } from '@/components/PlaceField';
 import { Button, Check, Eyebrow, Field, Segmented, SelectField, Sheet, useSwipe } from '@/components/ui';
@@ -12,11 +12,45 @@ import { addMinutes, clashes, clock, gapBetween, longDay, money, ordered, partOf
 import { ITEM_CATEGORIES, PARTS, type Day, type Item, type ItemCategory, type Part, type Plan } from '@/lib/types';
 import { SuggestSheet } from './SuggestSheet';
 
-const COMMON_TIME_ZONES = [
+const FALLBACK_TIME_ZONES = [
   'America/Toronto', 'America/Halifax', 'America/Winnipeg', 'America/Edmonton', 'America/Vancouver',
   'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Australia/Sydney', 'UTC',
+  'Africa/Lagos', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Australia/Sydney',
 ];
+const IANA_TIME_ZONES = ['UTC', ...(typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : FALLBACK_TIME_ZONES)];
+
+type TimeZoneGroup = { region: string; zones: { value: string; label: string }[] };
+const TIME_ZONE_OFFSET_CACHE = new Map<string, string>();
+
+const timeZoneOffset = (zone: string, date: string) => {
+  const key = `${date}|${zone}`;
+  const cached = TIME_ZONE_OFFSET_CACHE.get(key);
+  if (cached) return cached;
+  let offset = 'UTC+00:00';
+  try {
+    const instant = new Date(`${date || '2026-01-01'}T12:00:00Z`);
+    const raw = new Intl.DateTimeFormat('en', { timeZone: zone, timeZoneName: 'longOffset' }).formatToParts(instant).find(part => part.type === 'timeZoneName')?.value;
+    if (raw && raw !== 'GMT') offset = raw.replace('GMT', 'UTC');
+  } catch { /* Keep the zone usable even if an older browser cannot format its offset. */ }
+  TIME_ZONE_OFFSET_CACHE.set(key, offset);
+  return offset;
+};
+
+const timeZoneGroups = (zones: string[], date: string): TimeZoneGroup[] => {
+  const groups = new Map<string, TimeZoneGroup['zones']>();
+  for (const zone of zones) {
+    const [region, ...parts] = zone.split('/');
+    const label = `${parts.length ? parts.join(' / ').replaceAll('_', ' ') : region} — ${timeZoneOffset(zone, date)}`;
+    const list = groups.get(parts.length ? region : 'Universal') ?? [];
+    list.push({ value: zone, label });
+    groups.set(parts.length ? region : 'Universal', list);
+  }
+  return Array.from(groups, ([region, groupedZones]) => ({ region, zones: groupedZones }));
+};
+
+function TimeZoneOptions({ groups }: { groups: TimeZoneGroup[] }) {
+  return groups.map(group => <optgroup key={group.region} label={group.region}>{group.zones.map(zone => <option key={zone.value} value={zone.value}>{zone.label}</option>)}</optgroup>);
+}
 
 const hhmm = (mins: number) => { const m = Math.max(0, Math.min(23 * 60 + 59, mins)); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 
@@ -183,7 +217,9 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const [toSpot, setToSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.toAddress, lat: item?.flight?.toLat, lng: item?.flight?.toLng });
   const [detailsOpen, setDetailsOpen] = useState(!!item);
   const [dirty, setDirty] = useState(false);
-  const timeZones = Array.from(new Set([deviceZone, startZone, endZone, ...COMMON_TIME_ZONES]));
+  const timeZones = useMemo(() => Array.from(new Set([deviceZone, startZone, endZone, ...IANA_TIME_ZONES])), [deviceZone, startZone, endZone]);
+  const departureTimeZones = useMemo(() => timeZoneGroups(timeZones, startDate), [timeZones, startDate]);
+  const arrivalTimeZones = useMemo(() => timeZoneGroups(timeZones, endDate), [timeZones, endDate]);
   const step = plan.detail === 'half' ? 1800 : 300;
   const badEnd = when === 'time' && !!end && (!endDate || endDate < startDate || (endDate === startDate && end <= start));
   const effectiveTitle = title.trim() || (category === 'flight' && from.trim() && to.trim() ? `Flight ${from.trim()} to ${to.trim()}` : '');
@@ -235,15 +271,15 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
           </div>
 
           {when === 'time' && category === 'flight' && <div className="flex flex-col gap-3 border-y border-line py-4">
-            <SelectField label="Departure time zone" value={startZone} onChange={e => setStartZone(e.target.value)}>
-              {timeZones.map(zone => <option key={zone} value={zone}>{zone.replace('_', ' ')}</option>)}
+            <SelectField label="Departure time zone" hint="Offset shown for the departure date." value={startZone} onChange={e => setStartZone(e.target.value)}>
+              <TimeZoneOptions groups={departureTimeZones} />
             </SelectField>
             <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
               <Field label="Arrives" type="date" value={endDate} min={startDate} max={plan.days[plan.days.length - 1].date} onChange={e => setEndDate(e.target.value)} />
               <Field label="Arrival time" type="time" step={step} value={end} onChange={e => setEnd(e.target.value)} hint={badEnd ? 'Must be after departure' : undefined} />
             </div>
-            <SelectField label="Arrival time zone" value={endZone} onChange={e => setEndZone(e.target.value)}>
-              {timeZones.map(zone => <option key={zone} value={zone}>{zone.replace('_', ' ')}</option>)}
+            <SelectField label="Arrival time zone" hint="Offset shown for the arrival date." value={endZone} onChange={e => setEndZone(e.target.value)}>
+              <TimeZoneOptions groups={arrivalTimeZones} />
             </SelectField>
           </div>}
 
