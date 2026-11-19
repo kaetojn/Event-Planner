@@ -25,7 +25,20 @@ export function PlaceField({ label, value, onText, onPick, near, placeholder, hi
   // Google groups the keystrokes of one search, and the pick that ends it, under one token.
   const token = useRef(uid());
   const typed = useRef(false);
+  const input = useRef<HTMLInputElement>(null);
+  const intentionalBlur = useRef(false);
   const listId = useId();
+
+  // Mobile Safari can blur a focused input when autocomplete results update the
+  // sheet. Only restore that accidental blur; taps elsewhere and keyboard actions
+  // still dismiss or move focus normally.
+  useEffect(() => {
+    const notePointerTarget = (event: PointerEvent) => {
+      if (document.activeElement === input.current && event.target !== input.current) intentionalBlur.current = true;
+    };
+    document.addEventListener('pointerdown', notePointerTarget, true);
+    return () => document.removeEventListener('pointerdown', notePointerTarget, true);
+  }, []);
 
   useEffect(() => {
     if (!live || !typed.current || value.trim().length < 3) { setMatches([]); return; }
@@ -55,13 +68,22 @@ export function PlaceField({ label, value, onText, onPick, near, placeholder, hi
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-semibold">{label}</span>
         <input
+          ref={input}
           value={value} placeholder={placeholder} autoFocus={autoFocus} autoComplete="off" enterKeyHint="done"
           role={live ? 'combobox' : undefined} aria-expanded={live ? showing : undefined} aria-controls={live ? listId : undefined} aria-autocomplete={live ? 'list' : undefined}
           aria-activedescendant={showing && active >= 0 ? `${listId}-${active}` : undefined}
           onChange={e => { typed.current = true; onText(e.target.value); }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onFocus={() => { intentionalBlur.current = false; setOpen(true); }}
+          onBlur={() => {
+            if (!intentionalBlur.current && typed.current) {
+              requestAnimationFrame(() => input.current?.focus({ preventScroll: true }));
+              return;
+            }
+            intentionalBlur.current = false;
+            setTimeout(() => setOpen(false), 150);
+          }}
           onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === 'Tab') intentionalBlur.current = true;
             if (!showing) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); setActive((active + 1) % matches.length); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((active - 1 + matches.length) % matches.length); }
@@ -75,8 +97,8 @@ export function PlaceField({ label, value, onText, onPick, near, placeholder, hi
         <ul id={listId} role="listbox" aria-label={`${label} suggestions`} className="absolute inset-x-0 top-[78px] z-20 animate-fade overflow-hidden rounded-xl border border-line bg-surface shadow-xl">
           {matches.map((m, n) => (
             <li key={m.id} id={`${listId}-${n}`} role="option" aria-selected={n === active} className={n === active ? 'bg-tint' : undefined}>
-              {/* onMouseDown keeps the field from losing focus before the pick registers */}
-              <button type="button" tabIndex={-1} onMouseDown={e => e.preventDefault()} onClick={() => void pick(m)} className="flex min-h-[52px] w-full flex-col justify-center border-b border-line px-3 py-2 text-left">
+              {/* Pointer down covers touch and mouse, keeping focus until the pick registers. */}
+              <button type="button" tabIndex={-1} onPointerDown={e => e.preventDefault()} onClick={() => void pick(m)} className="flex min-h-[52px] w-full flex-col justify-center border-b border-line px-3 py-2 text-left">
                 <span className="text-[15px] font-semibold">{m.name}</span>
                 {m.detail && <span className="text-[13px] text-muted">{m.detail}</span>}
               </button>
