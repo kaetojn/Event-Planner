@@ -40,6 +40,7 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 14 | Put a reliable app-version refresh action in Settings/Profile for iPhone Add to Home Screen mode, syncing account data first and preserving the current screen | build → proof-of-work | 12 | done |
 | 15 | Repair the iPhone ItemSheet category collapse and distill ordinary item entry to title + start first, with progressive disclosure for category, end, place, cost and note | impeccable distill → adapt → clarify → proof-of-work | 8 | done |
 | 16 | Keep iOS keyboard focus stable while entering airport codes and vertically center Safari's native date/time values | impeccable adapt → harden → proof-of-work | 8, 15 | done |
+| 17 | Stop the shared sheet from resetting focus after every controlled-field update on mobile and replace free-text time zones with native dropdowns | impeccable adapt → harden → proof-of-work | 16 | done |
 
 ## Deferred
 - Worker modularization and CI hardening — worthwhile code-health work, but not needed to safely deliver this design refinement.

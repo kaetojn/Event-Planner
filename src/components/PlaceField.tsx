@@ -25,20 +25,7 @@ export function PlaceField({ label, value, onText, onPick, near, placeholder, hi
   // Google groups the keystrokes of one search, and the pick that ends it, under one token.
   const token = useRef(uid());
   const typed = useRef(false);
-  const input = useRef<HTMLInputElement>(null);
-  const intentionalBlur = useRef(false);
   const listId = useId();
-
-  // Mobile Safari can blur a focused input when autocomplete results update the
-  // sheet. Only restore that accidental blur; taps elsewhere and keyboard actions
-  // still dismiss or move focus normally.
-  useEffect(() => {
-    const notePointerTarget = (event: PointerEvent) => {
-      if (document.activeElement === input.current && event.target !== input.current) intentionalBlur.current = true;
-    };
-    document.addEventListener('pointerdown', notePointerTarget, true);
-    return () => document.removeEventListener('pointerdown', notePointerTarget, true);
-  }, []);
 
   useEffect(() => {
     if (!live || !typed.current || value.trim().length < 3) { setMatches([]); return; }
@@ -68,22 +55,13 @@ export function PlaceField({ label, value, onText, onPick, near, placeholder, hi
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-semibold">{label}</span>
         <input
-          ref={input}
           value={value} placeholder={placeholder} autoFocus={autoFocus} autoComplete="off" enterKeyHint="done"
           role={live ? 'combobox' : undefined} aria-expanded={live ? showing : undefined} aria-controls={live ? listId : undefined} aria-autocomplete={live ? 'list' : undefined}
           aria-activedescendant={showing && active >= 0 ? `${listId}-${active}` : undefined}
           onChange={e => { typed.current = true; onText(e.target.value); }}
-          onFocus={() => { intentionalBlur.current = false; setOpen(true); }}
-          onBlur={() => {
-            if (!intentionalBlur.current && typed.current) {
-              requestAnimationFrame(() => input.current?.focus({ preventScroll: true }));
-              return;
-            }
-            intentionalBlur.current = false;
-            setTimeout(() => setOpen(false), 150);
-          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === 'Tab') intentionalBlur.current = true;
             if (!showing) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); setActive((active + 1) % matches.length); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((active - 1 + matches.length) % matches.length); }

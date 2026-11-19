@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { createPortal } from 'react-dom';
-import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type PointerEvent, type ReactNode, type SelectHTMLAttributes } from 'react';
 import { Tick, Cross } from './icons';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger'; size?: 'md' | 'lg' };
@@ -85,6 +85,18 @@ export function Field({ label, hint, className, ...p }: InputHTMLAttributes<HTML
   );
 }
 
+export function SelectField({ label, hint, className, children, ...p }: SelectHTMLAttributes<HTMLSelectElement> & { label: string; hint?: string }) {
+  return (
+    <label className={clsx('flex flex-col gap-1.5', className)}>
+      <span className="text-sm font-semibold">{label}</span>
+      <select {...p} className="h-12 w-full rounded-xl border border-edge bg-surface px-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20">
+        {children}
+      </select>
+      {hint && <span className="text-[13px] text-muted">{hint}</span>}
+    </label>
+  );
+}
+
 /**
  * A bottom sheet on phones and a centred dialog on wider screens.
  * It is drawn at the top of the page, outside whatever opened it. A sheet left inside an animated
@@ -92,14 +104,17 @@ export function Field({ label, hint, className, ...p }: InputHTMLAttributes<HTML
  */
 export function Sheet({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; }, [onClose]);
+  // Focus and scroll locking belong to the sheet opening, not every form update.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close.current(); };
     document.addEventListener('keydown', onKey);
     const before = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     ref.current?.focus();
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = before; };
-  }, [onClose]);
+  }, []);
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center print:hidden">
       <div className="absolute inset-0 animate-fade bg-black/45" onClick={onClose} />

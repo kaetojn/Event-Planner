@@ -3,7 +3,7 @@ import { useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
 import { CategoryIcon } from '@/components/icons';
 import { PlaceField } from '@/components/PlaceField';
-import { Button, Check, Eyebrow, Field, Segmented, Sheet, useSwipe } from '@/components/ui';
+import { Button, Check, Eyebrow, Field, Segmented, SelectField, Sheet, useSwipe } from '@/components/ui';
 import { TRAVEL_WORD, useLegs } from '@/lib/legs';
 import { api } from '@/lib/api';
 import { downloadItemCalendar, googleCalendarUrl } from '@/lib/calendar';
@@ -11,6 +11,12 @@ import { featuresAtom, patchItem, profileAtom, removeItem, saveItem, sessionAtom
 import { addMinutes, clashes, clock, gapBetween, longDay, money, ordered, partOf, span, toMin, uid, zonedIso } from '@/lib/time';
 import { ITEM_CATEGORIES, PARTS, type Day, type Item, type ItemCategory, type Part, type Plan } from '@/lib/types';
 import { SuggestSheet } from './SuggestSheet';
+
+const COMMON_TIME_ZONES = [
+  'America/Toronto', 'America/Halifax', 'America/Winnipeg', 'America/Edmonton', 'America/Vancouver',
+  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Australia/Sydney', 'UTC',
+];
 
 const hhmm = (mins: number) => { const m = Math.max(0, Math.min(23 * 60 + 59, mins)); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 
@@ -177,6 +183,7 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const [toSpot, setToSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.toAddress, lat: item?.flight?.toLat, lng: item?.flight?.toLng });
   const [detailsOpen, setDetailsOpen] = useState(!!item);
   const [dirty, setDirty] = useState(false);
+  const timeZones = Array.from(new Set([deviceZone, startZone, endZone, ...COMMON_TIME_ZONES]));
   const step = plan.detail === 'half' ? 1800 : 300;
   const badEnd = when === 'time' && !!end && (!endDate || endDate < startDate || (endDate === startDate && end <= start));
   const effectiveTitle = title.trim() || (category === 'flight' && from.trim() && to.trim() ? `Flight ${from.trim()} to ${to.trim()}` : '');
@@ -228,12 +235,16 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
           </div>
 
           {when === 'time' && category === 'flight' && <div className="flex flex-col gap-3 border-y border-line py-4">
-            <Field label="Departure time zone" list="plan-a-timezones" value={startZone} onChange={e => setStartZone(e.target.value)} />
+            <SelectField label="Departure time zone" value={startZone} onChange={e => setStartZone(e.target.value)}>
+              {timeZones.map(zone => <option key={zone} value={zone}>{zone.replace('_', ' ')}</option>)}
+            </SelectField>
             <div className="grid grid-cols-[1.2fr_.8fr] gap-3">
               <Field label="Arrives" type="date" value={endDate} min={startDate} max={plan.days[plan.days.length - 1].date} onChange={e => setEndDate(e.target.value)} />
               <Field label="Arrival time" type="time" step={step} value={end} onChange={e => setEnd(e.target.value)} hint={badEnd ? 'Must be after departure' : undefined} />
             </div>
-            <Field label="Arrival time zone" list="plan-a-timezones" value={endZone} onChange={e => setEndZone(e.target.value)} />
+            <SelectField label="Arrival time zone" value={endZone} onChange={e => setEndZone(e.target.value)}>
+              {timeZones.map(zone => <option key={zone} value={zone}>{zone.replace('_', ' ')}</option>)}
+            </SelectField>
           </div>}
 
           {when === 'time' && category !== 'flight' && (end ? <div className="flex flex-col gap-2 border-y border-line py-4">
@@ -244,7 +255,6 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
             <button type="button" className="h-11 self-start text-sm font-medium text-muted underline underline-offset-4" onClick={() => { setEnd(''); setDirty(true); }}>Remove end time</button>
           </div> : <Button className="self-start" onClick={() => { const next = addMinutes(startDate, start, 60); setEndDate(next.date); setEnd(next.time); setDirty(true); }}>Add end time</Button>)}
 
-          <datalist id="plan-a-timezones">{['America/Toronto', 'America/Vancouver', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Australia/Sydney', 'UTC'].map(z => <option key={z} value={z} />)}</datalist>
           {category === 'flight' ? <>
             <div className="grid grid-cols-2 gap-3"><Field label="Airline (optional)" value={airline} onChange={e => setAirline(e.target.value)} placeholder="Air Canada" /><Field label="Flight number" value={flightNumber} onChange={e => setFlightNumber(e.target.value)} placeholder="AC 123" /></div>
             <PlaceField label="Departure airport" value={from} placeholder="Airport name or code" hint={fromSpot.address} onText={text => { setFrom(text); setFromSpot({}); }} onPick={p => { setFrom(p.name); setFromSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
