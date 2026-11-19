@@ -21,13 +21,13 @@ export const Car = (p: P) => <Svg {...p}><path d="M5 17h14l1-5-2-5H6l-2 5 1 5zM7
 export const Ticket = (p: P) => <Svg {...p}><path d="M4 7h16v4a2 2 0 000 4v4H4v-4a2 2 0 000-4V7zM12 7v12" /></Svg>;
 export const Pin = (p: P) => <Svg {...p}><path d="M12 21s6-5 6-11a6 6 0 10-12 0c0 6 6 11 6 11z" /><circle cx="12" cy="10" r="2" /></Svg>;
 export const More = (p: P) => <Svg {...p}><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" /></Svg>;
+export const Minus = (p: P) => <Svg {...p}><path d="M5 12h14" /></Svg>;
 
-export function CategoryIcon({ category = 'activity', ...p }: P & { category?: ItemCategory }) {
+export function CategoryIcon({ category = 'none', ...p }: P & { category?: ItemCategory }) {
+  if (category === 'none') return <Minus {...p} />;
   if (category === 'flight') return <Plane {...p} />;
   if (category === 'stay') return <Bed {...p} />;
   if (category === 'food') return <Food {...p} />;
-  if (category === 'transport') return <Car {...p} />;
-  if (category === 'booking') return <Ticket {...p} />;
-  if (category === 'other') return <More {...p} />;
+  if (category === 'transport') return <Ticket {...p} />;
   return <Pin {...p} />;
 }

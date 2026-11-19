@@ -5,11 +5,13 @@ import { NewPlan } from './features/NewPlan';
 import { PlanView } from './features/PlanView';
 import { Profile } from './features/Profile';
 import { SharedView } from './features/SharedView';
-import { themeAtom, useRoute } from './lib/store';
+import { migrateItemCategories, themeAtom, useRoute } from './lib/store';
 
 export default function App() {
   const route = useRoute();
   const theme = useAtomValue(themeAtom);
+
+  useEffect(() => { migrateItemCategories(); }, []);
 
   // "Match device" follows the phone's own light or dark setting and changes with it.
   useEffect(() => {

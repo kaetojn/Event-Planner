@@ -3,7 +3,7 @@ import { atomWithStorage } from 'jotai/utils';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from './api';
 import { daysBetween } from './time';
-import type { Access, Features, Item, Plan, Profile, Session, Theme } from './types';
+import { normalizeItemCategory, type Access, type Features, type Item, type Plan, type Profile, type Session, type Theme } from './types';
 
 // Everything is kept on the device first, so the app opens instantly and works offline.
 // With an account, plans are also saved to the server and shared between devices and people.
@@ -23,6 +23,25 @@ export const lastSyncAtom = atom<string | null>(null);
 
 const store = getDefaultStore();
 const token = () => store.get(sessionAtom)?.token;
+
+const normalizePlanCategories = (plan: Plan): Plan => {
+  let changed = false;
+  const days = plan.days.map(day => ({
+    ...day,
+    items: day.items.map(item => {
+      const category = normalizeItemCategory(item.category);
+      if (category === item.category) return item;
+      changed = true;
+      return { ...item, category };
+    }),
+  }));
+  return changed ? { ...plan, days, updatedAt: new Date().toISOString() } : plan;
+};
+
+/** Idempotent migration for plans saved before None replaced Booking and Other. */
+export function migrateItemCategories() {
+  store.set(plansAtom, plans => plans.map(normalizePlanCategories));
+}
 
 export function addPlan(plan: Plan) {
   store.set(plansAtom, plans => [...plans, plan]);
@@ -132,7 +151,7 @@ export async function pull(): Promise<void> {
     }
     for (const [id, r] of remote) if (!local.some(p => p.id === id)) { merged.push(r.plan); nowSaved[id] = r.plan.updatedAt; }
     store.set(savedAtom, nowSaved);
-    store.set(plansAtom, merged);
+    store.set(plansAtom, merged.map(normalizePlanCategories));
     store.set(accessAtom, Object.fromEntries(me.plans.map(s => [s.plan.id, { role: s.role, owner: s.owner, editors: s.editors, view: s.view }])));
     store.set(featuresAtom, { ai: me.ai, places: me.places });
     store.set(sessionAtom, s => (s ? { ...s, user: me.user } : s));

@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import { downloadItemCalendar, googleCalendarUrl } from '@/lib/calendar';
 import { featuresAtom, patchItem, profileAtom, removeItem, saveItem, sessionAtom } from '@/lib/store';
 import { addMinutes, clashes, clock, gapBetween, longDay, money, ordered, partOf, shortDay, span, toMin, uid, zonedIso } from '@/lib/time';
-import { ITEM_CATEGORIES, PARTS, type Day, type Item, type ItemCategory, type Part, type Plan } from '@/lib/types';
+import { CATEGORY_ACCENT, ITEM_ACCENTS, ITEM_CATEGORIES, PARTS, normalizeItemCategory, type Day, type Item, type ItemAccent, type ItemCategory, type Part, type Plan } from '@/lib/types';
 import { SuggestSheet } from './SuggestSheet';
 
 const FALLBACK_TIME_ZONES = [
@@ -97,6 +97,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
   const [editing, setEditing] = useState<Item | null>(null);
   const [window, setWindow] = useState<{ from: string; to: string } | null>(null);
   const items = ordered(day.items);
+  const featuredId = items.find(item => item.status === 'todo' && normalizeItemCategory(item.category) !== 'none')?.id;
   const mode = plan.travel ?? 'drive';
   const legOf = useLegs(items, mode);
   const flights = flightSequence(plan);
@@ -132,7 +133,7 @@ export function Timeline({ plan, day, onAdd }: { plan: Plan; day: Day; onAdd: ()
         const travel = leg ? (tight ? `${span(leg)} ${TRAVEL_WORD[mode]}, but only ${span(gap!.mins)} between them` : `${span(leg)} ${TRAVEL_WORD[mode]}${next.start ? ` · leave by ${clock(hhmm(toMin(next.start) - leg))}` : ''}`) : null;
         return (
           <div key={item.id} className="animate-rise" style={{ animationDelay: `${Math.min(n, 6) * 40}ms` }}>
-            <Row item={item} clash={!!next && clashes(item, next) ? next.title : undefined} onOpen={() => setEditing(item)} onStatus={status => patchItem(plan.id, day.date, item.id, { status })} />
+            <Row item={item} featured={item.id === featuredId} clash={!!next && clashes(item, next) ? next.title : undefined} onOpen={() => setEditing(item)} onStatus={status => patchItem(plan.id, day.date, item.id, { status })} />
             {item.category === 'flight' && <FlightRouteHint plan={plan} item={item} departFromHome={item.id === firstFlightId} transferToStay={item.id === arrivalFlightId} />}
             {gap && gap.free && gap.mins >= 120 ? (
               <div className="my-4 ml-[72px] flex flex-col gap-3 border-y border-line bg-surface p-[18px]">
@@ -215,12 +216,49 @@ function FlightRouteHint({ plan, item, departFromHome, transferToStay }: { plan:
   </div>;
 }
 
-function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; onOpen: () => void; onStatus: (s: Item['status']) => void }) {
+function TimeRail({ item }: { item: Item }) {
+  const quiet = item.status === 'done' || item.status === 'skipped';
+  return <div className={clsx('num pt-1 text-[13px] leading-tight', quiet ? 'text-muted' : 'font-bold')}>
+    {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
+    {item.end && <div className="pt-1 font-normal text-muted">{clock(item.end)}</div>}
+  </div>;
+}
+
+function ArtifactCheck({ item, onStatus }: { item: Item; onStatus: (s: Item['status']) => void }) {
+  const complete = item.status === 'done' || item.status === 'skipped';
+  return <div className="absolute top-1 right-1 z-[3]"><Check state={item.status} label={item.status === 'done' ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(complete ? 'todo' : 'done'); }} /></div>;
+}
+
+function MetaCell({ label, value }: { label: string; value?: string | number | null }) {
+  if (value === undefined || value === null || value === '') return <span aria-hidden="true" />;
+  return <span>{label}<strong className="num mt-1 block truncate text-[12px] tracking-normal text-ink">{value}</strong></span>;
+}
+
+function Row({ item, featured, clash, onOpen, onStatus }: { item: Item; featured: boolean; clash?: string; onOpen: () => void; onStatus: (s: Item['status']) => void }) {
   const done = item.status === 'done', skipped = item.status === 'skipped';
   const swipe = useSwipe(() => onStatus(done ? 'todo' : 'done'), () => onStatus(skipped ? 'todo' : 'skipped'));
+  const category = normalizeItemCategory(item.category);
+  const accent: ItemAccent = item.accent ?? (category === 'none' ? 'brass' : CATEGORY_ACCENT[category]);
   const flight = item.flight;
   const details = [flight?.number && [flight.airline, flight.number].filter(Boolean).join(' '), flight?.from && flight?.to ? `${flight.from} to ${flight.to}` : item.place, item.startDate && item.endDate && item.endDate !== item.startDate ? `Arrives ${longDay(item.endDate)}` : item.start && item.end && (!item.endDate || item.endDate === item.startDate) ? span(toMin(item.end) - toMin(item.start)) : null, item.cost ? money(item.cost) : null, skipped ? 'Skipped' : null].filter(Boolean);
-  if (item.category === 'flight') {
+  if (category === 'none') return (
+    <div {...swipe} className="grid grid-cols-[64px_1fr_auto] items-start border-t border-line py-4 sm:grid-cols-[76px_1fr_auto]">
+      <TimeRail item={item} />
+      <button type="button" onClick={onOpen} className="flex flex-col gap-0.5 px-2 py-1 text-left transition-colors hover:bg-wash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
+        <span className={clsx('font-serif text-[24px] leading-[1.05] tracking-[-0.015em] transition-colors', done ? 'font-medium text-muted line-through' : skipped ? 'font-medium text-muted' : 'font-bold')}>{item.title}</span>
+        {details.length > 0 && <span className="text-[13px] text-muted">{details.join(' · ')}</span>}
+        {item.note && <span className="text-[13px] text-muted">{item.note}</span>}
+        {clash && <span className="text-[13px] font-medium text-bad">Runs into {clash}</span>}
+      </button>
+      <div className="-mt-1"><Check state={item.status} label={done ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(done || skipped ? 'todo' : 'done'); }} /></div>
+    </div>
+  );
+
+  const frame = clsx('artifact-card relative min-h-[172px] overflow-hidden border bg-surface', (done || skipped) && 'opacity-65');
+  const frameProps = { className: frame, 'data-accent': accent, 'data-featured': featured ? 'true' : undefined };
+  const sharedMeta = clash ? <span className="block border-t border-bad px-4 py-2 text-[12px] font-medium text-bad">Runs into {clash}</span> : null;
+
+  if (category === 'flight') {
     const from = airportKey(flight?.from).toUpperCase() || '—';
     const to = airportKey(flight?.to).toUpperCase() || '—';
     const departsAt = item.startDate && item.start ? Date.parse(`${item.startDate}T${item.start}:00Z`) : NaN;
@@ -229,12 +267,9 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
     const arrivalLabel = item.end ? `${item.endDate && item.endDate !== item.startDate ? `${shortDay(item.endDate)} · ` : ''}${clock(item.end)}` : '—';
     return (
       <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
-        <div className={clsx('num pt-1 text-[13px] leading-tight', done || skipped ? 'text-muted' : 'font-bold')}>
-          {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
-          {item.end && <div className="pt-1 font-normal text-muted">{clock(item.end)}</div>}
-        </div>
-        <div className={clsx('flight-ticket overflow-hidden border border-edge bg-surface', (done || skipped) && 'opacity-65')}>
-          <span className="absolute inset-y-0 left-0 w-9 bg-accent" aria-hidden="true" />
+        <TimeRail item={item} />
+        <div {...frameProps} className={clsx(frame, 'flight-ticket')}>
+          <span className="absolute inset-y-0 left-0 w-9 bg-[var(--artifact-accent)]" aria-hidden="true" />
           <button type="button" onClick={onOpen} className="relative z-[1] flex w-full flex-col text-left">
             <span className="flex items-start justify-between gap-3 px-4 pt-3 pb-2 pl-12 pr-12">
               <span className="text-[10px] font-bold uppercase tracking-[.2em] text-muted">Flight{flight?.number ? ` · ${flight.number}` : ''}</span>
@@ -250,38 +285,105 @@ function Row({ item, clash, onOpen, onStatus }: { item: Item; clash?: string; on
               <span>Arrives<strong className="num mt-1 block text-[13px] tracking-normal text-ink">{arrivalLabel}</strong></span>
               <span>Duration<strong className="num mt-1 block text-[13px] tracking-normal text-ink">{duration ?? '—'}</strong></span>
             </span>
-            {(item.note || clash) && <span className={clsx('px-4 py-2 pl-12 text-[12px]', clash ? 'text-bad' : 'text-muted')}>{clash ? `Runs into ${clash}` : item.note}</span>}
+            {sharedMeta}
           </button>
-          <div className="absolute top-1 right-1 z-[3]"><Check state={item.status} label={done ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(done || skipped ? 'todo' : 'done'); }} /></div>
+          <ArtifactCheck item={item} onStatus={onStatus} />
         </div>
       </div>
     );
   }
-  return (
-    <div {...swipe} className="grid grid-cols-[64px_1fr_auto] items-start border-t border-line py-4 sm:grid-cols-[76px_1fr_auto]">
-      <div className={clsx('num pt-1 text-[13px]', done || skipped ? 'text-muted' : 'font-bold')}>
-        {item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label}
-        {item.end && <div className="pt-0.5 font-normal text-muted">{clock(item.end)}</div>}
-      </div>
-      <button type="button" onClick={onOpen} className="flex flex-col gap-0.5 px-2 py-1 text-left transition-colors hover:bg-wash focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
-        <span className="mb-0.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-muted"><CategoryIcon category={item.category} width={13} height={13} />{ITEM_CATEGORIES.find(c => c.id === (item.category ?? 'activity'))?.label}</span>
-        <span className={clsx('font-serif text-[24px] leading-[1.05] tracking-[-0.015em] transition-colors', done ? 'font-medium text-muted line-through' : skipped ? 'font-medium text-muted' : 'font-bold')}>{item.title}</span>
-        {details.length > 0 && <span className="text-[13px] text-muted">{details.join(' · ')}</span>}
-        {item.note && <span className="text-[13px] text-muted">{item.note}</span>}
-        {clash && <span className="text-[13px] font-medium text-bad">Runs into {clash}</span>}
+
+  if (category === 'stay') return <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
+    <TimeRail item={item} />
+    <div {...frameProps}>
+      <span className="absolute inset-y-0 left-0 flex w-10 items-end justify-center bg-[var(--artifact-accent)] pb-4 text-[9px] font-bold tracking-[.2em] text-[var(--artifact-on)] [writing-mode:vertical-rl]" aria-hidden="true">STAY</span>
+      <button type="button" onClick={onOpen} className="flex min-h-[172px] w-full flex-col pl-10 text-left">
+        <span className="flex min-h-9 items-center justify-between gap-3 border-b border-line px-4 pr-12 text-[9px] font-bold uppercase tracking-[.18em] text-muted"><span>Hotel key</span>{item.stay?.confirmation && <span className="truncate">Ref {item.stay.confirmation}</span>}</span>
+        <span className="grid flex-1 grid-cols-[1fr_auto] items-center gap-3 px-4 py-3">
+          <span><strong className="block font-serif text-[22px] leading-[1.02] tracking-[-.02em]">{item.title}</strong>{item.place && <span className="mt-1 block truncate text-[11px] text-muted">{item.place}</span>}</span>
+          {item.stay?.room && <span className="min-w-12 border border-[var(--artifact-accent)] bg-[var(--artifact-tint)] px-2 py-2 text-center"><span className="block text-[8px] font-bold uppercase tracking-[.14em] text-muted">Room</span><strong className="num mt-1 block font-serif text-xl">{item.stay.room}</strong></span>}
+        </span>
+        <span className="grid min-h-12 grid-cols-3 gap-3 border-t border-line px-4 py-2 text-[9px] uppercase tracking-[.14em] text-muted">
+          <MetaCell label="Check in" value={item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label} />
+          <MetaCell label="Check out" value={item.end ? clock(item.end) : undefined} />
+          <MetaCell label="Cost" value={item.cost ? money(item.cost) : undefined} />
+        </span>
+        {sharedMeta}
       </button>
-      <div className="-mt-1">
-        <Check state={item.status} label={done ? `Mark ${item.title} as not done` : `Mark ${item.title} as done`} onClick={() => { navigator.vibrate?.(10); onStatus(done || skipped ? 'todo' : 'done'); }} />
-      </div>
+      <ArtifactCheck item={item} onStatus={onStatus} />
     </div>
-  );
+  </div>;
+
+  if (category === 'food') return <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
+    <TimeRail item={item} />
+    <div {...frameProps}>
+      <button type="button" onClick={onOpen} className="flex min-h-[172px] w-full flex-col text-left">
+        <span className="flex min-h-10 items-center justify-between bg-[var(--artifact-accent)] px-4 pr-12 text-[9px] font-bold uppercase tracking-[.2em] text-[var(--artifact-on)]"><span>Reservation</span><span>{item.food?.partySize ? `Table for ${item.food.partySize}` : 'Food'}</span></span>
+        <span className="flex flex-1 flex-col justify-center px-4 py-3 text-center">
+          <strong className="font-serif text-[26px] leading-none tracking-[-.02em]">{item.title}</strong>
+          {item.place && <span className="mx-auto mt-2 max-w-full truncate border-y border-line px-4 py-1 text-[11px] text-muted">{item.place}</span>}
+        </span>
+        <span className="grid min-h-12 grid-cols-3 gap-3 border-t border-line px-4 py-2 text-[9px] uppercase tracking-[.14em] text-muted">
+          <MetaCell label="Time" value={item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label} />
+          <MetaCell label="Reference" value={item.food?.reservation} />
+          <MetaCell label="Cost" value={item.cost ? money(item.cost) : undefined} />
+        </span>
+        {sharedMeta}
+      </button>
+      <ArtifactCheck item={item} onStatus={onStatus} />
+    </div>
+  </div>;
+
+  if (category === 'transport') {
+    const routeReady = item.transport?.from || item.transport?.to;
+    return <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
+      <TimeRail item={item} />
+      <div {...frameProps} className={clsx(frame, 'transit-ticket')}>
+        <button type="button" onClick={onOpen} className="flex min-h-[172px] w-full flex-col text-left">
+          <span className="flex min-h-9 items-center justify-between border-b border-line px-4 pr-12 text-[9px] font-bold uppercase tracking-[.18em] text-muted"><span>Transit</span><span className="truncate">{[item.transport?.operator, item.transport?.service].filter(Boolean).join(' · ')}</span></span>
+          <span className="relative flex flex-1 flex-col justify-center overflow-hidden bg-[var(--artifact-tint)] px-4 py-3">
+            <span className="absolute inset-y-0 left-0 w-2 bg-[var(--artifact-accent)]" aria-hidden="true" />
+            <strong className="pl-2 font-serif text-[22px] leading-none tracking-[-.02em]">{item.title}</strong>
+            {routeReady && <span className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 pl-2"><span className="truncate text-[13px] font-bold">{item.transport?.from}</span><Arrow width={18} height={18} className="text-muted" /><span className="truncate text-right text-[13px] font-bold">{item.transport?.to}</span></span>}
+          </span>
+          <span className="grid min-h-12 grid-cols-3 gap-3 border-t border-dashed border-edge px-4 py-2 text-[9px] uppercase tracking-[.14em] text-muted">
+            <MetaCell label="Departs" value={item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label} />
+            <MetaCell label="Arrives" value={item.end ? clock(item.end) : undefined} />
+            <MetaCell label="Seat" value={item.transport?.seat} />
+          </span>
+          {sharedMeta}
+        </button>
+        <ArtifactCheck item={item} onStatus={onStatus} />
+      </div>
+    </div>;
+  }
+
+  return <div {...swipe} className="grid grid-cols-[64px_1fr] border-t border-line py-4 sm:grid-cols-[76px_1fr]">
+    <TimeRail item={item} />
+    <div {...frameProps}>
+      <span className="absolute inset-y-0 left-0 flex w-11 items-center justify-center bg-[var(--artifact-accent)] text-[var(--artifact-on)]" aria-hidden="true"><CategoryIcon category="activity" width={20} height={20} /></span>
+      <button type="button" onClick={onOpen} className="flex min-h-[172px] w-full flex-col pl-11 text-left">
+        <span className="flex min-h-9 items-center justify-between border-b border-line px-4 pr-12 text-[9px] font-bold uppercase tracking-[.18em] text-muted"><span>Admission</span>{item.activity?.reference && <span className="truncate">Ref {item.activity.reference}</span>}</span>
+        <span className="flex flex-1 flex-col justify-center px-4 py-3"><strong className="font-serif text-[25px] leading-[1.02] tracking-[-.02em]">{item.title}</strong>{item.place && <span className="mt-1 truncate text-[11px] text-muted">{item.place}</span>}</span>
+        <span className="grid min-h-12 grid-cols-3 gap-3 border-t border-line px-4 py-2 text-[9px] uppercase tracking-[.14em] text-muted">
+          <MetaCell label="Starts" value={item.start ? clock(item.start) : PARTS.find(p => p.id === item.part)?.label} />
+          <MetaCell label="Duration" value={item.start && item.end ? span(toMin(item.end) - toMin(item.start)) : undefined} />
+          <MetaCell label="Cost" value={item.cost ? money(item.cost) : undefined} />
+        </span>
+        {sharedMeta}
+      </button>
+      <ArtifactCheck item={item} onStatus={onStatus} />
+    </div>
+  </div>;
 }
 
 /** Add or change one item. A new item starts an hour after the last one in the day. */
 export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; item?: Item; onClose: () => void }) {
   const lastTimed = ordered(day.items).filter(i => i.start).pop();
   const [title, setTitle] = useState(item?.title ?? '');
-  const [category, setCategory] = useState<ItemCategory>(item?.category ?? 'activity');
+  const initialCategory = normalizeItemCategory(item?.category);
+  const [category, setCategory] = useState<ItemCategory>(initialCategory);
+  const [accent, setAccent] = useState<ItemAccent>(item?.accent ?? (initialCategory === 'none' ? 'brass' : CATEGORY_ACCENT[initialCategory]));
   const [when, setWhen] = useState<'time' | 'part'>(item ? (item.start ? 'time' : 'part') : plan.detail === 'loose' ? 'part' : 'time');
   const [startDate, setStartDate] = useState(item?.startDate ?? day.date);
   const [start, setStart] = useState(item?.start ?? (lastTimed ? hhmm(Math.min(23 * 60 + 30, toMin(lastTimed.end ?? lastTimed.start!) + (lastTimed.end ? 30 : 60))) : '09:00'));
@@ -302,6 +404,16 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const [fromSpot, setFromSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.fromAddress, lat: item?.flight?.fromLat, lng: item?.flight?.fromLng });
   const [to, setTo] = useState(item?.flight?.to ?? '');
   const [toSpot, setToSpot] = useState<{ address?: string; lat?: number; lng?: number }>({ address: item?.flight?.toAddress, lat: item?.flight?.toLat, lng: item?.flight?.toLng });
+  const [activityReference, setActivityReference] = useState(item?.activity?.reference ?? '');
+  const [stayConfirmation, setStayConfirmation] = useState(item?.stay?.confirmation ?? '');
+  const [stayRoom, setStayRoom] = useState(item?.stay?.room ?? '');
+  const [partySize, setPartySize] = useState(item?.food?.partySize ? String(item.food.partySize) : '');
+  const [foodReservation, setFoodReservation] = useState(item?.food?.reservation ?? '');
+  const [transportFrom, setTransportFrom] = useState(item?.transport?.from ?? '');
+  const [transportTo, setTransportTo] = useState(item?.transport?.to ?? '');
+  const [transportOperator, setTransportOperator] = useState(item?.transport?.operator ?? '');
+  const [transportService, setTransportService] = useState(item?.transport?.service ?? '');
+  const [transportSeat, setTransportSeat] = useState(item?.transport?.seat ?? '');
   const [detailsOpen, setDetailsOpen] = useState(!!item);
   const [dirty, setDirty] = useState(false);
   const timeZones = useMemo(() => Array.from(new Set([deviceZone, startZone, endZone, ...IANA_TIME_ZONES])), [deviceZone, startZone, endZone]);
@@ -311,13 +423,24 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
   const badEnd = when === 'time' && !!end && (!endDate || endDate < startDate || (endDate === startDate && end <= start));
   const effectiveTitle = title.trim() || (category === 'flight' && from.trim() && to.trim() ? `Flight ${from.trim()} to ${to.trim()}` : '');
   const attemptClose = () => { if (!dirty || confirm('Discard the changes to this item?')) onClose(); };
+  const chooseCategory = (next: ItemCategory) => {
+    setCategory(next);
+    setAccent(next === 'none' ? 'brass' : CATEGORY_ACCENT[next]);
+    setDirty(true);
+    if (next === 'flight') setWhen('time');
+  };
   const save = () => {
     saveItem(plan.id, day.date, {
       id: item?.id ?? uid(), title: effectiveTitle, category, status: item?.status ?? 'todo',
+      accent: category === 'none' ? undefined : accent,
       ...(when === 'time' ? { startDate, start, endDate: end ? endDate : undefined, end: end || undefined, startZone: startZone.trim() || undefined, endZone: end ? endZone.trim() || undefined : undefined } : { startDate, part }),
       place: category === 'flight' ? from.trim() || undefined : place.trim() || undefined,
       ...(category !== 'flight' && place.trim() ? spot : {}), cost: +cost > 0 ? +cost : undefined, note: note.trim() || undefined,
       ...(category === 'flight' ? { flight: { airline: airline.trim() || undefined, number: flightNumber.trim() || undefined, from: from.trim() || undefined, fromAddress: fromSpot.address, fromLat: fromSpot.lat, fromLng: fromSpot.lng, to: to.trim() || undefined, toAddress: toSpot.address, toLat: toSpot.lat, toLng: toSpot.lng } } : {}),
+      ...(category === 'activity' ? { activity: { reference: activityReference.trim() || undefined } } : {}),
+      ...(category === 'stay' ? { stay: { confirmation: stayConfirmation.trim() || undefined, room: stayRoom.trim() || undefined } } : {}),
+      ...(category === 'food' ? { food: { partySize: +partySize > 0 ? Math.round(+partySize) : undefined, reservation: foodReservation.trim() || undefined } } : {}),
+      ...(category === 'transport' ? { transport: { from: transportFrom.trim() || undefined, to: transportTo.trim() || undefined, operator: transportOperator.trim() || undefined, service: transportService.trim() || undefined, seat: transportSeat.trim() || undefined } } : {}),
     });
     onClose();
   };
@@ -352,10 +475,18 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
         {detailsOpen && <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold">Category</span>
-            <div className="flex min-h-11 shrink-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" aria-label="Category">
-              {ITEM_CATEGORIES.map(c => <button key={c.id} type="button" aria-pressed={category === c.id} onClick={() => { setCategory(c.id); setDirty(true); if (c.id === 'flight') setWhen('time'); }} className={clsx('inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm transition', category === c.id ? 'bg-ink font-semibold text-ground' : 'border border-edge bg-surface font-medium')}><CategoryIcon category={c.id} width={17} height={17} />{c.label}</button>)}
+            <div className="grid grid-cols-3 border-t border-l border-line" aria-label="Category">
+              {ITEM_CATEGORIES.map(c => <button key={c.id} type="button" aria-pressed={category === c.id} onClick={() => chooseCategory(c.id)} className={clsx('inline-flex min-h-12 items-center justify-center gap-1.5 border-r border-b border-line px-2 text-[12px] transition-colors', category === c.id ? 'bg-ink font-bold text-ground' : 'bg-surface font-medium text-muted hover:bg-wash hover:text-ink')}><CategoryIcon category={c.id} width={15} height={15} />{c.label}</button>)}
             </div>
           </div>
+
+          {category !== 'none' && <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Card color</span>
+            <div className="grid grid-cols-3 gap-2" aria-label="Card color">
+              {ITEM_ACCENTS.map(option => <button key={option.id} type="button" aria-pressed={accent === option.id} onClick={() => { setAccent(option.id); setDirty(true); }} className={clsx('accent-choice flex min-h-11 items-center gap-2 border px-2 text-left text-[12px] font-semibold transition-colors', accent === option.id ? 'border-ink bg-wash' : 'border-line bg-surface')} data-accent={option.id}><span className="h-5 w-5 shrink-0 bg-[var(--artifact-accent)]" aria-hidden="true" />{option.label}</button>)}
+            </div>
+            <span className="text-[12px] text-muted">Changes this card only. Light and dark mode stay coordinated.</span>
+          </div>}
 
           {when === 'time' && category === 'flight' && <div className="flex flex-col gap-3 border-y border-line py-4">
             <SelectField label="Departure time zone" hint="Offset shown for the departure date." value={startZone} onChange={e => setStartZone(e.target.value)}>
@@ -382,9 +513,19 @@ export function ItemSheet({ plan, day, item, onClose }: { plan: Plan; day: Day; 
             <div className="grid grid-cols-2 gap-3"><Field label="Airline (optional)" value={airline} onChange={e => setAirline(e.target.value)} placeholder="Air Canada" /><Field label="Flight number" value={flightNumber} onChange={e => setFlightNumber(e.target.value)} placeholder="AC 123" /></div>
             <PlaceField label="Departure airport" value={from} placeholder="Airport name or code" hint={fromSpot.address} onText={text => { setFrom(text); setFromSpot({}); }} onPick={p => { setFrom(p.name); setFromSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
             <PlaceField label="Arrival airport" value={to} placeholder="Airport name or code" hint={toSpot.address} onText={text => { setTo(text); setToSpot({}); }} onPick={p => { setTo(p.name); setToSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
-          </> : <PlaceField label="Where (optional)" value={place} placeholder="Name or address" hint={spot.address} near={plan.at}
-            onText={text => { setPlace(text); setSpot({}); }}
-            onPick={p => { setPlace(p.name); setSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />}
+          </> : <>
+            {category === 'activity' && <Field label="Ticket or booking reference (optional)" value={activityReference} onChange={e => setActivityReference(e.target.value)} placeholder="TKT-2048" />}
+            {category === 'stay' && <div className="grid grid-cols-2 gap-3"><Field label="Confirmation (optional)" value={stayConfirmation} onChange={e => setStayConfirmation(e.target.value)} placeholder="H7K29" /><Field label="Room (optional)" value={stayRoom} onChange={e => setStayRoom(e.target.value)} placeholder="412" /></div>}
+            {category === 'food' && <div className="grid grid-cols-2 gap-3"><Field label="Party size (optional)" type="number" inputMode="numeric" min={1} value={partySize} onChange={e => setPartySize(e.target.value)} placeholder="2" /><Field label="Reservation (optional)" value={foodReservation} onChange={e => setFoodReservation(e.target.value)} placeholder="RSV-82" /></div>}
+            {category === 'transport' && <div className="flex flex-col gap-3 border-y border-line py-4">
+              <div className="grid grid-cols-2 gap-3"><Field label="From (optional)" value={transportFrom} onChange={e => setTransportFrom(e.target.value)} placeholder="Union Station" /><Field label="To (optional)" value={transportTo} onChange={e => setTransportTo(e.target.value)} placeholder="Montréal" /></div>
+              <div className="grid grid-cols-2 gap-3"><Field label="Operator (optional)" value={transportOperator} onChange={e => setTransportOperator(e.target.value)} placeholder="VIA Rail" /><Field label="Service (optional)" value={transportService} onChange={e => setTransportService(e.target.value)} placeholder="Train 64" /></div>
+              <Field className="max-w-40" label="Seat (optional)" value={transportSeat} onChange={e => setTransportSeat(e.target.value)} placeholder="7A" />
+            </div>}
+            <PlaceField label="Where (optional)" value={place} placeholder="Name or address" hint={spot.address} near={plan.at}
+              onText={text => { setPlace(text); setSpot({}); }}
+              onPick={p => { setPlace(p.name); setSpot({ address: p.address ?? p.detail, lat: p.lat, lng: p.lng }); }} />
+          </>}
           <Field className="max-w-40" label="Cost (optional)" type="number" inputMode="decimal" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" />
           <label className="flex flex-col gap-1.5"><span className="text-sm font-semibold">Note (optional)</span><textarea value={note} onChange={e => setNote(e.target.value)} rows={3} className="w-full resize-y rounded-xl border border-edge bg-surface px-3 py-3 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20" /></label>
           {item && <section className="flex flex-col gap-2 border-t border-line pt-4"><div className="text-sm font-semibold">Calendar</div><div className="grid grid-cols-2 gap-2"><Button onClick={() => downloadItemCalendar(plan, item, day.date)}>Download event</Button><a href={googleCalendarUrl(plan, item, day.date)} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-full border border-edge bg-surface px-4 text-sm font-semibold">Open in Google</a></div></section>}

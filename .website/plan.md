@@ -3,7 +3,8 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 
 ## Decisions
 - Replace the incumbent rounded “printed itinerary” system with The Architect’s Schedule as the app-wide design base: limestone ground, graphite ink, zinc rules, restrained aged-brass accents, architectural typography, flat surfaces, and 0–6px control geometry — because the user chose its precise, luxurious restraint. (user)
-- Treat flights as the sole Departure Ledger exception inside that same system: flight rows use boarding-pass structure, large airport codes, tabular local times, perforation logic, and compact connection segments; ordinary activities remain measured architectural schedule rows — because flights should be visually emphasized without turning the whole planner into an airport board. (user)
+- Extend the Departure Ledger into an Architectural Artifact Family: flights use boarding passes, stays room keys, food menu headers, activities admission cards, and transport transit tickets; None remains the measured schedule row — because category should be bold and scannable without making every entry imitate a flight. (user)
+- Keep categorized artifacts within one shared landscape footprint and one architectural grammar, with six curated per-item accents that remain coordinated across light and dark themes — because variety should improve recognition without disrupting timeline rhythm or theme semantics. (user)
 - Refine the existing “printed itinerary” visual identity instead of replacing it — because `DESIGN.md` is coherent and product-specific; the request confirmed this direction. (user)
 - Cover the full app surface: home, plan workspace and its modes, plan creation, profile, sharing, and public view — because the request is for the Plan A website rather than a named screen. (director)
 - Keep motion subtle and feedback-led — because Plan A is an operate-mode, phone-first planning tool and its documented design system already limits motion to state changes. (director)
@@ -49,16 +50,19 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 21 | Replace the whole-app visual system with The Architect’s Schedule, including rectilinear controls, measured grids, restrained radii, and cohesive light/dark tokens | impeccable overdrive → build → proof-of-work | 1–20 | done |
 | 22 | Build a Departure Ledger flight treatment inside the architectural timeline while keeping non-flight activities in the base schedule language | impeccable shape → build → proof-of-work | 21 | done |
 | 23 | Verify all primary routes at phone and desktop sizes, run detector and independent finish review, then document the shipped system | impeccable audit → finish review → document | 21, 22 | done |
+| 24 | Replace the legacy category model with None, Activity, Flight, Stay, Food, and Transport; migrate Booking to Activity and Other/missing to None | build → proof-of-work | 23 | done |
+| 25 | Build the shared Architectural Artifact Family, curated accent palette, category-specific fields, and next-up emphasis | impeccable overdrive → shape → build | 24 | done |
+| 26 | Verify the artifact family on phone and desktop in light/dark themes, run detector, update the design contract, and ship | impeccable audit → polish → proof-of-work | 25 | done |
 
 ## Direction contract
 
-**THESIS:** Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. Its defining move is a continuous itinerary grid whose precision makes complex days feel composed. Flights may become boarding passes, but no other content borrows airport costume.
+**THESIS:** Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. A coordinated Architectural Artifact Family makes categorized entries instantly recognisable while preserving the continuous itinerary grid; uncategorised entries stay quiet and unboxed.
 
 **OWN-WORLD:** Limestone ground, graphite ink, zinc secondary text and hairlines, with aged brass used sparingly for selection and flight indexing. Geometry is square or 4–6px, typography is architectural and editorial, and depth comes from rules and spacing rather than shadows.
 
-**STORY:** The planner immediately sees the trip’s structure, reads ordinary activities as a calm chronological schedule, and recognizes flights as information-dense travel documents. They can scan local times, connections, and the next action without losing the larger day.
+**STORY:** The planner immediately sees the trip’s structure, reads None entries as a calm chronological schedule, and recognizes each categorized commitment through a familiar artifact: boarding pass, room key, menu, admission card, or transit ticket. They can scan operational details and the next action without losing the larger day.
 
-**FIRST VIEWPORT:** A compact trip header and measured date index lead into a two-column time rail. Activities are unboxed ruled rows. Flights alone expand into boarding-pass modules with airport codes, departure/arrival details, and a completion control. Rectilinear mode navigation anchors the bottom.
+**FIRST VIEWPORT:** A compact trip header and measured date index lead into a two-column time rail. None entries are unboxed ruled rows. Categorized entries occupy a shared 172px landscape footprint with distinct internal structures, restrained accents, and one completion control. Rectilinear mode navigation anchors the bottom.
 
 **FORM:** The Architect’s Schedule is the chosen assigned direction, first in the ordered set, from seed `f3d4a487`. Departure Ledger donates only the flight-entry topology. Approved comp: `.impeccable/mocks/hybrid-ledger-grid.png`.
 

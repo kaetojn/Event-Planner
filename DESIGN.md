@@ -118,16 +118,16 @@ components:
 
 Plan A is a measured architectural schedule, not a stack of soft lifestyle cards. Its defining move is a continuous itinerary grid whose precision makes complex days feel composed: a compact trip header, a measured date index, a fixed time rail, and calm chronological rows that preserve the shape of the day.
 
-The visual world is limestone, graphite, zinc, and aged brass. Finlandica supplies condensed editorial authority; Lato handles instructions and dense operational detail. Space, rules, and alignment create hierarchy. Flights alone may expand into boarding-pass modules because that topology improves travel scanning; nothing else borrows airport costume.
+The visual world is limestone, graphite, zinc, and aged brass. Finlandica supplies condensed editorial authority; Lato handles instructions and dense operational detail. Space, rules, and alignment create hierarchy. Categorized itinerary entries form an Architectural Artifact Family: flights read as boarding passes, stays as room keys, food as menu headers, transport as transit tickets, and activities as admission cards. Uncategorised entries remain quiet schedule rows.
 
 **Key Characteristics:**
 
-- Continuous ruled schedules instead of floating activity cards.
+- Continuous ruled schedules with a coordinated family of purposeful artifact cards.
 - Rectilinear 0–6px geometry for ordinary interface elements.
 - Finlandica headlines and titles paired with compact Lato notation.
-- Aged brass reserved for selection, completion, primary action, and flight indexing.
+- Aged brass reserved for selection, completion, and primary action; artifact accents identify category without changing meaning.
 - Light and dark themes that preserve identical hierarchy and interaction semantics.
-- Information-dense flight tickets inside an otherwise unboxed itinerary.
+- A shared 172px artifact footprint for categorized entries, with None entries left unboxed.
 
 ## Colors
 
@@ -156,6 +156,12 @@ The palette reads like drafting materials: limestone paper, graphite type, zinc 
 
 **The Semantic Parity Rule.** Dark mode changes values, never roles: every light token has the same purpose and hierarchy at night.
 
+### Artifact accents
+
+Brass, moss, clay, oxblood, slate, and aubergine are a curated, user-selectable artifact palette. Each has a light and dark value plus a quiet tint. Accent appears on an index strip, masthead, route band, border, or small swatch—never across the whole page and never as a substitute for success, error, completion, or selection. Category defaults provide immediate distinction, while an item-level override lets a traveller establish a personal visual index.
+
+**The Accent-Is-Index Rule.** Artifact colour identifies an entry; it never changes the application theme or carries status by itself.
+
 ## Typography
 
 **Display Font:** Finlandica (with Arial Narrow and system sans fallbacks)
@@ -181,13 +187,13 @@ Times, dates, durations, and money use tabular figures. Airport codes use Finlan
 
 Plan A is phone-first and centred within a 620px maximum content frame. The base inset is 20px and increases to 32px at the small breakpoint (640px). Vertical structure is carried by full-width rules, consistent 16–24px internal spacing, and 32px section intervals rather than independent card margins.
 
-Inside a plan, the first viewport moves from a compact action header to plan title and metadata, then to a horizontally scrollable date index. The timeline is a measured two-column schedule: a 64px time rail on narrow screens, 76px from 640px upward, and flexible content to the right. Ordinary items stay as unboxed ruled rows. Gaps and route guidance align to the content column so the time rail remains continuous.
+Inside a plan, the first viewport moves from a compact action header to plan title and metadata, then to a horizontally scrollable date index. The timeline is a measured two-column schedule: a 64px time rail on narrow screens, 76px from 640px upward, and flexible content to the right. None items stay as unboxed ruled rows. Categorized artifacts occupy the same measured content column and share a 172px minimum footprint. Gaps and route guidance align to that column so the time rail remains continuous.
 
 The four-mode navigation is fixed to the bottom, constrained to the same 620px frame, and divided into equal rectilinear cells. Plan content reserves 96px beneath itself and all bottom-aligned surfaces include the device safe area. Wider screens do not become dashboards; they preserve the single-job column, expose secondary header actions, and centre sheets as dialogs.
 
 Forms use one-column flow by default, paired two-column date/time or amount fields where the content remains legible. Overflowing category and date indexes scroll horizontally without forcing the page wider. Print removes application navigation, resolves the palette to white paper and black ink, and preserves break-safe itinerary sections.
 
-**The Continuous Grid Rule.** New itinerary content must align to the existing time rail and rules; do not introduce a floating card merely to group ordinary activity data.
+**The Continuous Grid Rule.** Every row and artifact aligns to the existing time rail and rules; category treatment may change internal structure, never the timeline geometry.
 
 ## Elevation & Depth
 
@@ -201,11 +207,11 @@ Motion supplies momentary depth: buttons lift by 1px on hover and compress on pr
 
 The ordinary form language is square or barely eased. Checks use 2px corners, icon controls 3px, buttons and fields 4px, and larger bounded containers no more than 6px. Tailwind aliases such as `rounded-full`, `rounded-xl`, and `rounded-2xl` intentionally resolve to this 4–6px architectural scale; they do not create pills or soft cards.
 
-Sheets are the single containment exception: the phone bottom sheet rounds only its exposed top corners to 12px, while the centred desktop dialog uses 8px. Progress bars and the small “today” indicator may be circular because they are signals, not containers. Flight-ticket edge notches are functional perforation cues and never migrate to other components.
+Sheets are the single containment exception: the phone bottom sheet rounds only its exposed top corners to 12px, while the centred desktop dialog uses 8px. Progress bars and the small “today” indicator may be circular because they are signals, not containers. Artifact silhouettes stay rectilinear; flight perforations and transport corner clips are restrained structural cues, not decoration.
 
 **The Rectilinear Default Rule.** Every new control or container starts at 0–4px and may reach 6px only when its scale needs it.
 
-**The Ticket Exception Rule.** Perforations, cut-outs, airport-code typography, and indexed colour strips belong only to flight entries.
+**The Artifact Grammar Rule.** Each category gets one recognisable physical cue: flight perforations, a stay key stripe, a food masthead, an activity admission index, or transit-ticket corner clips. Never mix cues between categories or reproduce an object literally.
 
 ## Components
 
@@ -223,14 +229,20 @@ Components feel precise, restrained, and thumb-ready. Interactive controls keep 
 
 - **Choice:** A large 4px bordered answer with Finlandica title, compact hint, and square check. Selection uses a brass border and a second 1px ring.
 - **Segmented:** A 4px outer frame with 2px cells separated by zinc rules. The selected cell is graphite-on-limestone inverse, reserving brass for higher-priority selection surfaces.
-- **Category selectors:** Horizontally scrollable 44px controls whose inherited `rounded-full` alias resolves to 4px, never a capsule.
+- **Category selectors:** A stable 3×2 grid for None, Activity, Flight, Stay, Food, and Transport. Every option is at least 44px tall and uses the category icon plus label.
+- **Accent selectors:** A 3×2 swatch grid shown only for artifact categories. Selection remains visible through border and pressed state, not colour alone.
 
 ### Cards / Containers
 
 - **Plan summaries:** Bounded 4px surfaces with a narrow brass or zinc index strip, strong internal rule, and no shadow.
 - **Open time:** A full-width ruled insert aligned after the time rail, not a floating card.
-- **Ordinary schedule row:** Unboxed, border-top separated, with time at left, category/title/detail in the middle, and a square completion control at right.
-- **Flight ticket:** The only boarding-pass module. It uses a brass index strip, prominent airport codes, local departure and arrival times, duration, restrained circular edge notches, and a dashed cut line. It must never invent gate, terminal, status, or live operational data.
+- **None schedule row:** Unboxed, border-top separated, with time at left, title/detail in the middle, and a square completion control at right.
+- **Artifact card family:** Flight, stay, food, activity, and transport share the same border, surface, 172px minimum footprint, metadata rhythm, completion target, and accent system. The next upcoming incomplete artifact may receive an accent border; no shadow is added.
+- **Flight / boarding pass:** Airport codes, local departure and arrival times, duration, restrained edge notches, and a dashed cut line. It must never invent gate, terminal, status, or live operational data.
+- **Stay / room key:** Vertical key stripe, hotel name and place, room aperture when known, check-in/out, confirmation, and cost.
+- **Food / menu header:** Coloured reservation masthead, centred restaurant identity, party size, time, reference, and cost.
+- **Activity / admission card:** Admission index, strong event title, place, start, duration, ticket/reference, and cost.
+- **Transport / transit ticket:** Clipped ticket corners, route band, origin/destination, operator/service, depart/arrive, and seat.
 
 ### Inputs / Fields
 
@@ -263,16 +275,16 @@ Components feel precise, restrained, and thumb-ready. Interactive controls keep 
 
 - **Do** preserve the continuous time rail and chronological rules when adding itinerary data.
 - **Do** use Finlandica for titles, airport codes, and summary numbers while keeping operational copy in Lato.
-- **Do** keep brass scarce and semantic: action, selection, completion, focus, and flight indexing.
+- **Do** keep brass scarce and semantic, and use the curated artifact palette only as an item index.
 - **Do** maintain role-for-role parity across light and dark themes.
-- **Do** expose local departure and arrival context for flights without losing the larger day.
+- **Do** preserve category-specific operational context without losing the larger day.
 - **Do** retain 44px minimum targets, visible keyboard focus, semantic pressed/current states, modal focus handling, and reduced-motion support.
 
 ### Don't:
 
-- **Don't** turn ordinary activities, gaps, or form groups into soft lifestyle cards.
+- **Don't** turn None entries, gaps, or form groups into soft lifestyle cards.
 - **Don't** use pill geometry for containers or controls; Tailwind radius aliases must continue to resolve to the architectural 4–6px scale.
-- **Don't** apply boarding-pass styling, perforations, airport codes, or ticket cut-outs to anything except a flight.
+- **Don't** mix artifact cues: boarding-pass perforations and airport codes remain flight-only, while every other category keeps its own restrained structure.
 - **Don't** invent live flight facts such as gates, terminals, delays, or status.
 - **Don't** add shadows to resting content or introduce decorative gradients, photography, or illustration.
 - **Don't** let a desktop viewport turn the plan into a multi-panel dashboard; one mode remains the one job on screen.

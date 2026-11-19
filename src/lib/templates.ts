@@ -23,9 +23,22 @@ export function samplePlan(): Plan {
   const start = today();
   const days = daysBetween(start, shift(start, 2));
   const item = (title: string, start?: string, end?: string, extra: object = {}) => ({ id: uid(), title, start, end, status: 'todo' as const, ...extra });
-  days[0].items = [item('Train out of the city', '12:15'), item('Early check-in', '14:00'), item('Dinner reservation', '19:30', undefined, { cost: 180 })];
-  days[1].items = [item('Breakfast in the room', '11:00'), item('Spa', '12:30', '15:00', { cost: 320 }), item('Dinner reservation', '19:00', undefined, { cost: 200 })];
-  days[2].items = [item('Gym', '08:00'), item('Late checkout', '12:00'), item('Brunch', '13:00', undefined, { cost: 90 }), item('Train home', '15:00')];
+  days[0].items = [
+    item('Train out of the city', '12:15', '13:45', { category: 'transport', transport: { from: 'Union Station', to: 'The Lakes', operator: 'VIA Rail', service: 'Train 64', seat: '7A' } }),
+    item('Early check-in', '14:00', undefined, { category: 'stay', place: 'The Lakes Hotel', stay: { confirmation: 'PLANA', room: '412' } }),
+    item('Dinner reservation', '19:30', undefined, { category: 'food', place: 'The Dining Room', food: { partySize: 2, reservation: 'DINNER-2' }, cost: 180 }),
+  ];
+  days[1].items = [
+    item('Breakfast in the room', '11:00', undefined, { category: 'food', place: 'The Lakes Hotel', food: { partySize: 2 } }),
+    item('Spa', '12:30', '15:00', { category: 'activity', place: 'Bath House', activity: { reference: 'SPA-12' }, cost: 320 }),
+    item('Dinner reservation', '19:00', undefined, { category: 'food', place: 'Field & Hearth', food: { partySize: 2 }, cost: 200 }),
+  ];
+  days[2].items = [
+    item('Gym', '08:00', '09:00', { category: 'activity', place: 'The Lakes Hotel' }),
+    item('Late checkout', '12:00', undefined, { category: 'stay', place: 'The Lakes Hotel', stay: { room: '412' } }),
+    item('Brunch', '13:00', undefined, { category: 'food', place: 'Field & Hearth', food: { partySize: 2 }, cost: 90 }),
+    item('Train home', '15:00', '16:30', { category: 'transport', transport: { from: 'The Lakes', to: 'Union Station', operator: 'VIA Rail', service: 'Train 71' } }),
+  ];
   const now = new Date().toISOString();
   return {
     id: uid(), title: 'Sample Weekend', kind: 'weekend', destination: 'A hotel out of town', detail: 'fixed', people: 2, budget: 1800,

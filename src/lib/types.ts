@@ -5,7 +5,8 @@ export type Part = 'morning' | 'afternoon' | 'evening';
 export type Status = 'todo' | 'done' | 'skipped';
 export type Theme = 'system' | 'light' | 'dark';
 export type Travel = 'drive' | 'walk' | 'transit';
-export type ItemCategory = 'activity' | 'flight' | 'stay' | 'food' | 'transport' | 'booking' | 'other';
+export type ItemCategory = 'none' | 'activity' | 'flight' | 'stay' | 'food' | 'transport';
+export type ItemAccent = 'brass' | 'moss' | 'clay' | 'oxblood' | 'slate' | 'aubergine';
 
 /** Who can open a plan that is kept in an account. */
 export interface Access { role: 'owner' | 'editor'; owner: string; editors: string[]; view: string | null }
@@ -29,6 +30,8 @@ export interface Item {
   endZone?: string;
   part?: Part;
   category?: ItemCategory;
+  /** A curated accent for artifact cards. It never changes the application theme. */
+  accent?: ItemAccent;
   /** Where it happens: a name the person typed, or one chosen from a place search. */
   place?: string;
   /** Set when the place came from a search, so travel time can be worked out. */
@@ -50,6 +53,10 @@ export interface Item {
     toLat?: number;
     toLng?: number;
   };
+  activity?: { reference?: string };
+  stay?: { confirmation?: string; room?: string };
+  food?: { partySize?: number; reservation?: string };
+  transport?: { from?: string; to?: string; operator?: string; service?: string; seat?: string };
 }
 
 export interface Day { date: string; items: Item[] }
@@ -112,11 +119,34 @@ export const PARTS: { id: Part; label: string }[] = [
 ];
 
 export const ITEM_CATEGORIES: { id: ItemCategory; label: string }[] = [
+  { id: 'none', label: 'None' },
   { id: 'activity', label: 'Activity' },
   { id: 'flight', label: 'Flight' },
   { id: 'stay', label: 'Stay' },
   { id: 'food', label: 'Food' },
   { id: 'transport', label: 'Transport' },
-  { id: 'booking', label: 'Booking' },
-  { id: 'other', label: 'Other' },
 ];
+
+export const ITEM_ACCENTS: { id: ItemAccent; label: string }[] = [
+  { id: 'brass', label: 'Brass' },
+  { id: 'moss', label: 'Moss' },
+  { id: 'clay', label: 'Clay' },
+  { id: 'oxblood', label: 'Oxblood' },
+  { id: 'slate', label: 'Slate' },
+  { id: 'aubergine', label: 'Aubergine' },
+];
+
+export const CATEGORY_ACCENT: Record<Exclude<ItemCategory, 'none'>, ItemAccent> = {
+  activity: 'aubergine',
+  flight: 'brass',
+  stay: 'moss',
+  food: 'oxblood',
+  transport: 'slate',
+};
+
+/** Old saved values remain readable while the app moves them into the smaller category system. */
+export const normalizeItemCategory = (category?: string): ItemCategory => {
+  if (category === 'booking') return 'activity';
+  if (category === 'other' || !category) return 'none';
+  return ITEM_CATEGORIES.some(option => option.id === category) ? category as ItemCategory : 'none';
+};

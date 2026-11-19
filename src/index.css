@@ -78,12 +78,28 @@
 @utility stagger { & > * { animation: var(--animate-rise); } & > :nth-child(2) { animation-delay: 0.04s; } & > :nth-child(3) { animation-delay: 0.08s; } & > :nth-child(n + 4) { animation-delay: 0.12s; } }
 
 .architect-rule { border-color: var(--line); }
-.flight-ticket { position: relative; isolation: isolate; }
+.artifact-card,
+.accent-choice { --artifact-accent: var(--accent); --artifact-tint: var(--tint); --artifact-on: var(--on-accent); }
+.artifact-card { border-color: var(--edge); isolation: isolate; transition: border-color .22s ease, background-color .22s ease; }
+.artifact-card[data-featured="true"] { border-color: var(--artifact-accent); }
+.artifact-card:hover { background: color-mix(in srgb, var(--surface) 94%, var(--artifact-tint)); }
+.artifact-card[data-accent="moss"], .accent-choice[data-accent="moss"] { --artifact-accent: #66705a; --artifact-tint: #dce1d8; --artifact-on: #fff; }
+.artifact-card[data-accent="clay"], .accent-choice[data-accent="clay"] { --artifact-accent: #98694f; --artifact-tint: #eadbd2; --artifact-on: #fff; }
+.artifact-card[data-accent="oxblood"], .accent-choice[data-accent="oxblood"] { --artifact-accent: #844940; --artifact-tint: #ead8d5; --artifact-on: #fff; }
+.artifact-card[data-accent="slate"], .accent-choice[data-accent="slate"] { --artifact-accent: #5c6d75; --artifact-tint: #d9e0e2; --artifact-on: #fff; }
+.artifact-card[data-accent="aubergine"], .accent-choice[data-accent="aubergine"] { --artifact-accent: #6d566f; --artifact-tint: #e3dbe4; --artifact-on: #fff; }
+[data-theme="dark"] .artifact-card[data-accent="moss"], [data-theme="dark"] .accent-choice[data-accent="moss"] { --artifact-accent: #9aaa86; --artifact-tint: #2a3027; --artifact-on: #11120f; }
+[data-theme="dark"] .artifact-card[data-accent="clay"], [data-theme="dark"] .accent-choice[data-accent="clay"] { --artifact-accent: #c98a69; --artifact-tint: #352821; --artifact-on: #11120f; }
+[data-theme="dark"] .artifact-card[data-accent="oxblood"], [data-theme="dark"] .accent-choice[data-accent="oxblood"] { --artifact-accent: #cb7c70; --artifact-tint: #382523; --artifact-on: #11120f; }
+[data-theme="dark"] .artifact-card[data-accent="slate"], [data-theme="dark"] .accent-choice[data-accent="slate"] { --artifact-accent: #8fa5ad; --artifact-tint: #252d30; --artifact-on: #11120f; }
+[data-theme="dark"] .artifact-card[data-accent="aubergine"], [data-theme="dark"] .accent-choice[data-accent="aubergine"] { --artifact-accent: #ae8fb0; --artifact-tint: #302832; --artifact-on: #11120f; }
+.flight-ticket { position: relative; }
 .flight-ticket::before,
 .flight-ticket::after { content: ""; position: absolute; z-index: 2; top: 68%; width: 12px; height: 12px; border-radius: 50%; background: var(--ground); border: 1px solid var(--line); }
 .flight-ticket::before { left: -7px; }
 .flight-ticket::after { right: -7px; }
 .flight-ticket-cut { border-top: 1px dashed var(--edge); }
+.transit-ticket { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 

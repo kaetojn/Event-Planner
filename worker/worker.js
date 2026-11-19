@@ -719,7 +719,8 @@ Show the user a draft in the chat and get their agreement before adding many ite
 const idArg = { type: 'string', description: 'The plan id from list_plans' };
 const itemFields = {
   title: { type: 'string' },
-  category: { type: 'string', enum: ['activity', 'flight', 'stay', 'food', 'transport', 'booking', 'other'] },
+  category: { type: 'string', enum: ['none', 'activity', 'flight', 'stay', 'food', 'transport'] },
+  accent: { type: 'string', enum: ['brass', 'moss', 'clay', 'oxblood', 'slate', 'aubergine'], description: 'Optional curated card accent. Ignored for category none.' },
   start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Start date. Defaults to the containing day.' },
   end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'End date for an overnight or multi-day item.' },
   start_zone: { type: 'string', description: 'IANA time zone such as America/Toronto' },
@@ -731,6 +732,16 @@ const itemFields = {
   address: { type: 'string' },
   cost: { type: 'number', minimum: 0, description: 'Cost in dollars for the whole group' },
   note: { type: 'string' },
+  reference: { type: 'string', description: 'Ticket or booking reference for an activity' },
+  confirmation: { type: 'string', description: 'Hotel confirmation number for a stay' },
+  room: { type: 'string', description: 'Room number for a stay' },
+  party_size: { type: 'integer', minimum: 1, description: 'Party size for food reservations' },
+  reservation: { type: 'string', description: 'Restaurant reservation number' },
+  transport_from: { type: 'string' },
+  transport_to: { type: 'string' },
+  operator: { type: 'string', description: 'Transport operator' },
+  service: { type: 'string', description: 'Train, bus or service number' },
+  seat: { type: 'string' },
 };
 
 const TOOLS = [
@@ -832,7 +843,8 @@ const validDate = d => /^\d{4}-\d{2}-\d{2}$/.test(String(d)) && !Number.isNaN(Da
 function itemFrom(a, base = {}) {
   const item = { ...base };
   if (a.title !== undefined) item.title = String(a.title).trim().slice(0, 140);
-  if (a.category !== undefined) item.category = ['activity', 'flight', 'stay', 'food', 'transport', 'booking', 'other'].includes(a.category) ? a.category : 'other';
+  if (a.category !== undefined) item.category = a.category === 'booking' ? 'activity' : a.category === 'other' ? 'none' : ['none', 'activity', 'flight', 'stay', 'food', 'transport'].includes(a.category) ? a.category : 'none';
+  if (a.accent !== undefined) item.accent = ['brass', 'moss', 'clay', 'oxblood', 'slate', 'aubergine'].includes(a.accent) ? a.accent : undefined;
   if (a.start_date !== undefined) { if (!validDate(a.start_date)) throw new Error('Use a valid start_date.'); item.startDate = a.start_date; }
   if (a.end_date !== undefined) { if (!validDate(a.end_date)) throw new Error('Use a valid end_date.'); item.endDate = a.end_date; }
   if (a.start_zone !== undefined) item.startZone = String(a.start_zone).slice(0, 80) || undefined;
@@ -856,6 +868,19 @@ function itemFrom(a, base = {}) {
   if (a.address !== undefined) item.address = String(a.address).trim().slice(0, 160) || undefined;
   if (a.cost !== undefined) item.cost = +a.cost > 0 ? r2(+a.cost) : undefined;
   if (a.note !== undefined) item.note = String(a.note).trim().slice(0, 300) || undefined;
+  if (a.reference !== undefined) item.activity = { ...item.activity, reference: String(a.reference).trim().slice(0, 80) || undefined };
+  if (a.confirmation !== undefined) item.stay = { ...item.stay, confirmation: String(a.confirmation).trim().slice(0, 80) || undefined };
+  if (a.room !== undefined) item.stay = { ...item.stay, room: String(a.room).trim().slice(0, 40) || undefined };
+  if (a.party_size !== undefined) item.food = { ...item.food, partySize: +a.party_size > 0 ? Math.round(+a.party_size) : undefined };
+  if (a.reservation !== undefined) item.food = { ...item.food, reservation: String(a.reservation).trim().slice(0, 80) || undefined };
+  if ([a.transport_from, a.transport_to, a.operator, a.service, a.seat].some(v => v !== undefined)) item.transport = {
+    ...item.transport,
+    ...(a.transport_from !== undefined ? { from: String(a.transport_from).trim().slice(0, 100) || undefined } : {}),
+    ...(a.transport_to !== undefined ? { to: String(a.transport_to).trim().slice(0, 100) || undefined } : {}),
+    ...(a.operator !== undefined ? { operator: String(a.operator).trim().slice(0, 80) || undefined } : {}),
+    ...(a.service !== undefined ? { service: String(a.service).trim().slice(0, 80) || undefined } : {}),
+    ...(a.seat !== undefined ? { seat: String(a.seat).trim().slice(0, 40) || undefined } : {}),
+  };
   if (!item.title) throw new Error('Every item needs a title.');
   return item;
 }
@@ -863,7 +888,7 @@ function itemFrom(a, base = {}) {
 const describe = plan => ({
   id: plan.id, title: plan.title, kind: plan.kind, destination: plan.destination, detail: plan.detail, people: plan.people,
   budget: plan.budget ?? null, planned_total: totalOf(plan),
-  days: plan.days.map(d => ({ date: d.date, items: [...d.items].sort((a, b) => sortKey(a) - sortKey(b)).map(i => ({ id: i.id, title: i.title, category: i.category || 'activity', ...(i.start ? { start: i.start, start_date: i.startDate || d.date } : { part: i.part }), ...(i.end ? { end: i.end, end_date: i.endDate || i.startDate || d.date } : {}), ...(i.startZone ? { start_zone: i.startZone } : {}), ...(i.endZone ? { end_zone: i.endZone } : {}), ...(i.place ? { place: i.place } : {}), ...(i.address ? { address: i.address } : {}), ...(i.cost ? { cost: i.cost } : {}), ...(i.note ? { note: i.note } : {}), status: i.status })) })),
+  days: plan.days.map(d => ({ date: d.date, items: [...d.items].sort((a, b) => sortKey(a) - sortKey(b)).map(i => ({ id: i.id, title: i.title, category: i.category === 'booking' ? 'activity' : i.category === 'other' || !i.category ? 'none' : i.category, ...(i.accent ? { accent: i.accent } : {}), ...(i.start ? { start: i.start, start_date: i.startDate || d.date } : { part: i.part }), ...(i.end ? { end: i.end, end_date: i.endDate || i.startDate || d.date } : {}), ...(i.startZone ? { start_zone: i.startZone } : {}), ...(i.endZone ? { end_zone: i.endZone } : {}), ...(i.place ? { place: i.place } : {}), ...(i.address ? { address: i.address } : {}), ...(i.cost ? { cost: i.cost } : {}), ...(i.note ? { note: i.note } : {}), ...(i.activity?.reference ? { reference: i.activity.reference } : {}), ...(i.stay?.confirmation ? { confirmation: i.stay.confirmation } : {}), ...(i.stay?.room ? { room: i.stay.room } : {}), ...(i.food?.partySize ? { party_size: i.food.partySize } : {}), ...(i.food?.reservation ? { reservation: i.food.reservation } : {}), ...(i.transport?.from ? { transport_from: i.transport.from } : {}), ...(i.transport?.to ? { transport_to: i.transport.to } : {}), ...(i.transport?.operator ? { operator: i.transport.operator } : {}), ...(i.transport?.service ? { service: i.transport.service } : {}), ...(i.transport?.seat ? { seat: i.transport.seat } : {}), status: i.status })) })),
   tasks: plan.tasks.map(t => ({ text: t.text, done: t.done })),
   fixed_costs: plan.costs.map(c => ({ label: c.label, amount: c.amount })),
 });
