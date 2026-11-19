@@ -15,6 +15,7 @@ export const themeAtom = atomWithStorage<Theme>('plan-a:theme', 'system', undefi
 export const sessionAtom = atomWithStorage<Session | null>('plan-a:session', null, undefined, keep);
 export const accessAtom = atomWithStorage<Record<string, Access>>('plan-a:access', {}, undefined, keep);
 export const featuresAtom = atomWithStorage<Features>('plan-a:features', { ai: false, places: false }, undefined, keep);
+export const profileSyncAtom = atom<'idle' | 'saving' | 'offline'>('idle');
 /** For each plan saved to the account, the version the server has. A plan that differs still needs saving. */
 const savedAtom = atomWithStorage<Record<string, string>>('plan-a:saved', {}, undefined, keep);
 export const syncAtom = atom<'idle' | 'saving' | 'offline'>('idle');
@@ -138,8 +139,8 @@ export async function pull(): Promise<void> {
     const mine = store.get(profileAtom);
     const untouched = JSON.stringify(mine) === JSON.stringify(blank);
     if (me.profile && untouched) { profileSaved = JSON.stringify(me.profile); store.set(profileAtom, me.profile); }
-    else if (!me.profile && !untouched) pushProfile();
-    else if (me.profile) profileSaved = JSON.stringify(me.profile);
+    else if (!me.profile && !untouched) void pushProfile();
+    else if (me.profile) { profileSaved = JSON.stringify(me.profile); store.set(profileSyncAtom, 'idle'); }
     void push();
     store.set(lastSyncAtom, new Date().toISOString());
   } catch (e) {
@@ -153,12 +154,20 @@ export async function refreshPlans() {
 }
 
 let profileSaved = '';
-function pushProfile() {
+async function pushProfile() {
   const t = token();
   const profile = store.get(profileAtom);
   if (!t || JSON.stringify(profile) === profileSaved) return;
   profileSaved = JSON.stringify(profile);
-  void api.saveProfile(t, profile).catch(() => { profileSaved = ''; });
+  store.set(profileSyncAtom, 'saving');
+  try {
+    await api.saveProfile(t, profile);
+    store.set(profileSyncAtom, 'idle');
+    store.set(lastSyncAtom, new Date().toISOString());
+  } catch {
+    profileSaved = '';
+    store.set(profileSyncAtom, 'offline');
+  }
 }
 
 export async function signIn(session: Session) {
@@ -169,11 +178,14 @@ export async function signIn(session: Session) {
 /** Signing out takes the account's plans off this device. They stay in the account. */
 export async function signOut() {
   await push();
+  await pushProfile();
+  if (store.get(syncAtom) === 'offline' || store.get(profileSyncAtom) === 'offline') throw new Error('Your latest changes could not sync. Check your connection and try signing out again.');
   store.set(sessionAtom, null);
   store.set(plansAtom, []);
   store.set(profileAtom, blank);
   store.set(accessAtom, {});
   store.set(savedAtom, {});
+  store.set(profileSyncAtom, 'idle');
   profileSaved = '';
 }
 
@@ -183,7 +195,7 @@ export function startSync() {
   const soon = (fn: () => void, ms: number) => { clearTimeout(timer); timer = setTimeout(fn, ms); };
   store.sub(plansAtom, () => soon(() => void push(), 1200));
   store.sub(profileAtom, () => soon(pushProfile, 1500));
-  document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? (void push(), pushProfile()) : void pull()));
+  document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? (void push(), void pushProfile()) : void pull()));
   addEventListener('online', () => void pull());
   void pull();
 }

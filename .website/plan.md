@@ -42,6 +42,7 @@ Job: update · Stack: React 19.2.8 + Vite 7.3.8 + TypeScript 5.9 + Tailwind CSS 
 | 16 | Keep iOS keyboard focus stable while entering airport codes and vertically center Safari's native date/time values | impeccable adapt → harden → proof-of-work | 8, 15 | done |
 | 17 | Stop the shared sheet from resetting focus after every controlled-field update on mobile and replace free-text time zones with native dropdowns | impeccable adapt → harden → proof-of-work | 16 | done |
 | 18 | Populate flight time-zone dropdowns from the full browser IANA database and show date-aware UTC offsets | impeccable harden → clarify → proof-of-work | 17 | done |
+| 19 | Distill Profile around planning preferences, add trustworthy save feedback and a product-specific planning-style summary, then polish secondary settings | impeccable distill → delight → polish → proof-of-work | 4 | done |
 
 ## Deferred
 - Worker modularization and CI hardening — worthwhile code-health work, but not needed to safely deliver this design refinement.
